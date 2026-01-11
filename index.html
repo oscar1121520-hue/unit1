@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>美式英語拼字挑戰賽 - 進階除錯版</title>
+    <style>
+        :root {
+            --primary: #6c5ce7;
+            --success: #00b894;
+            --danger: #ff7675;
+            --dark: #2d3436;
+            --light: #f9f9f9;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+            background: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%);
+            margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh;
+        }
+
+        #app {
+            background: white; width: 90%; max-width: 500px; padding: 30px; border-radius: 24px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2); text-align: center;
+        }
+
+        .header-info { display: flex; justify-content: space-between; margin-bottom: 20px; font-weight: bold; font-size: 1.2rem; }
+        .timer { color: var(--danger); }
+        .score { color: var(--success); }
+
+        .quiz-container {
+            background: var(--light); padding: 30px; border-radius: 16px; margin-bottom: 20px;
+            border: 2px solid #eee; position: relative;
+        }
+
+        #mode-indicator { position: absolute; top: 10px; right: 10px; font-size: 0.8rem; color: #999; }
+        #chinese-word { font-size: 2.8rem; margin: 0; color: var(--dark); }
+
+        #word-input {
+            width: 100%; padding: 15px; font-size: 1.8rem; border: 3px solid #dfe6e9;
+            border-radius: 12px; text-align: center; outline: none; box-sizing: border-box;
+        }
+
+        #word-input.error { border-color: var(--danger); animation: shake 0.3s; }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        .btn {
+            cursor: pointer; border: none; padding: 12px 28px; border-radius: 12px;
+            font-size: 1.1rem; font-weight: bold; transition: 0.3s; margin: 10px 5px;
+        }
+
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-audio { background: #fdcb6e; color: #634d00; margin-top: 15px; }
+
+        .leaderboard-table { width: 100%; margin-top: 15px; border-collapse: collapse; }
+        .leaderboard-table th, .leaderboard-table td { padding: 10px; border-bottom: 1px solid #eee; text-align: center; }
+
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+
+<div id="app">
+    <div id="start-screen">
+        <h1 style="color: var(--primary);">🎧 進階拼字挑戰</h1>
+        <p>1. 答對 +10分 / 答錯 -5分<br>2. 錯題會在最後重新出現<br>3. 限時 3 分鐘</p>
+        <button class="btn btn-primary" onclick="initGame()">開始挑戰</button>
+    </div>
+
+    <div id="game-screen" class="hidden">
+        <div class="header-info">
+            <span class="timer" id="timer">⏱ 03:00</span>
+            <span class="score" id="score">得分: 0</span>
+        </div>
+        
+        <div class="quiz-container">
+            <div id="mode-indicator">第一輪題目</div>
+            <h2 id="chinese-word">---</h2>
+            <button class="btn btn-audio" onclick="speakWord()">🔊 聽發音</button>
+        </div>
+        
+        <input type="text" id="word-input" placeholder="請輸入英文..." autocomplete="off">
+    </div>
+
+    <div id="result-screen" class="hidden">
+        <h2>挑戰結束！</h2>
+        <p style="font-size: 1.5rem;">最終得分：<span id="final-score-val" style="color:var(--primary);">0</span></p>
+        
+        <div id="save-area">
+            <input type="text" id="player-name" placeholder="輸入名字" style="padding:10px; border-radius:8px; border:1px solid #ddd;">
+            <button class="btn btn-primary" onclick="saveScore()">儲存</button>
+        </div>
+
+        <div id="leaderboard-area">
+            <h3>🏆 排行榜</h3>
+            <table class="leaderboard-table">
+                <thead><tr><th>名次</th><th>名字</th><th>得分</th></tr></thead>
+                <tbody id="leaderboard-body"></tbody>
+            </table>
+        </div>
+        <button class="btn btn-primary" onclick="location.reload()">再玩一次</button>
+    </div>
+</div>
+
+<script>
+    const originalWords = [
+        {en: "like", zh: "喜歡"}, {en: "sport", zh: "運動"}, {en: "much", zh: "非常/很多"},
+        {en: "team", zh: "團隊"}, {en: "practice", zh: "練習"}, {en: "every", zh: "每一個"},
+        {en: "then", zh: "然後"}, {en: "swim", zh: "游泳"}, {en: "join", zh: "加入"},
+        {en: "eye", zh: "眼睛"}, {en: "hair", zh: "頭髮"}, {en: "know", zh: "知道"},
+        {en: "hundred", zh: "百"}, {en: "centimeter", zh: "公分"}, {en: "guitar", zh: "吉他"},
+        {en: "piano", zh: "鋼琴"}, {en: "nose", zh: "鼻子"}, {en: "leg", zh: "腿"},
+        {en: "large", zh: "大的"}, {en: "ear", zh: "耳朵"}, {en: "mouth", zh: "嘴巴"},
+        {en: "thick", zh: "厚的"}, {en: "lip", zh: "嘴唇"}, {en: "strong", zh: "強壯的"},
+        {en: "arm", zh: "手臂"}, {en: "height", zh: "高度"}, {en: "player", zh: "選手"},
+        {en: "the USA", zh: "美國"}, {en: "body", zh: "身體"}, {en: "stand out", zh: "脫穎而出"},
+        {en: "different", zh: "不同的"}, {en: "top", zh: "頂尖的"}
+    ];
+
+    let score = 0;
+    let timeLeft = 180;
+    let timerInterval;
+    let currentWordObj;
+    let activeQueue = []; // 目前要考的題庫
+    let wrongQueue = [];  // 答錯的題庫
+    let isReviewMode = false;
+
+    const inputEl = document.getElementById('word-input');
+
+    function initGame() {
+        score = 0;
+        timeLeft = 180;
+        isReviewMode = false;
+        activeQueue = [...originalWords].sort(() => Math.random() - 0.5);
+        wrongQueue = [];
+        
+        document.getElementById('start-screen').classList.add('hidden');
+        document.getElementById('game-screen').classList.remove('hidden');
+        
+        updateScoreDisplay();
+        nextQuestion();
+        startTimer();
+    }
+
+    function startTimer() {
+        timerInterval = setInterval(() => {
+            timeLeft--;
+            const m = Math.floor(timeLeft / 60).toString().padStart(2, '0');
+            const s = (timeLeft % 60).toString().padStart(2, '0');
+            document.getElementById('timer').innerText = `⏱ ${m}:${s}`;
+            if (timeLeft <= 0) endGame();
+        }, 1000);
+    }
+
+    function nextQuestion() {
+        if (activeQueue.length === 0) {
+            if (wrongQueue.length > 0) {
+                // 進入錯題重測模式
+                isReviewMode = true;
+                activeQueue = [...wrongQueue];
+                wrongQueue = [];
+                document.getElementById('mode-indicator').innerText = "錯題複習模式";
+                document.getElementById('mode-indicator').style.color = "var(--danger)";
+            } else {
+                // 所有題目都答對了，提早結束或重新開始一輪
+                endGame();
+                return;
+            }
+        }
+
+        currentWordObj = activeQueue.shift();
+        document.getElementById('chinese-word').innerText = currentWordObj.zh;
+        inputEl.value = "";
+        inputEl.focus();
+        setTimeout(speakWord, 300);
+    }
+
+    inputEl.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            checkAnswer();
+        }
+    });
+
+    function checkAnswer() {
+        const userValue = inputEl.value.trim().toLowerCase();
+        const correctValue = currentWordObj.en.toLowerCase();
+
+        if (userValue === correctValue) {
+            score += 10;
+            updateScoreDisplay();
+            nextQuestion();
+        } else {
+            // 答錯邏輯
+            score = Math.max(0, score - 5);
+            wrongQueue.push(currentWordObj); // 加入錯題本
+            updateScoreDisplay();
+            
+            // 錯誤視覺回饋
+            inputEl.classList.add('error');
+            setTimeout(() => inputEl.classList.remove('error'), 300);
+            
+            nextQuestion(); // 直接跳轉下一題
+        }
+    }
+
+    function updateScoreDisplay() {
+        document.getElementById('score').innerText = `得分: ${score}`;
+    }
+
+    function speakWord() {
+        if (!currentWordObj) return;
+        window.speechSynthesis.cancel();
+        const utter = new SpeechSynthesisUtterance(currentWordObj.en);
+        utter.lang = 'en-US';
+        window.speechSynthesis.speak(utter);
+    }
+
+    function endGame() {
+        clearInterval(timerInterval);
+        document.getElementById('game-screen').classList.add('hidden');
+        document.getElementById('result-screen').classList.remove('hidden');
+        document.getElementById('final-score-val').innerText = score;
+        updateLeaderboardDisplay();
+    }
+
+    function saveScore() {
+        const name = document.getElementById('player-name').value.trim() || "匿名球員";
+        const leaderboard = JSON.parse(localStorage.getItem('spell_expert_rank') || "[]");
+        leaderboard.push({ name, score, date: new Date().toLocaleDateString() });
+        leaderboard.sort((a, b) => b.score - a.score);
+        localStorage.setItem('spell_expert_rank', JSON.stringify(leaderboard.slice(0, 5)));
+        document.getElementById('save-area').innerHTML = "<p>成績已儲存！</p>";
+        updateLeaderboardDisplay();
+    }
+
+    function updateLeaderboardDisplay() {
+        const leaderboard = JSON.parse(localStorage.getItem('spell_expert_rank') || "[]");
+        const tbody = document.getElementById('leaderboard-body');
+        tbody.innerHTML = leaderboard.map((r, i) => `<tr><td>${i+1}</td><td>${r.name}</td><td>${r.score}</td></tr>`).join('');
+    }
+</script>
+
+</body>
+</html>
