@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>美式英語拼字挑戰 - 5分鐘強化版</title>
+    <title>美式英語拼字挑戰 - 500秒終極版</title>
     <style>
         :root {
             --primary: #6c5ce7; --success: #00b894; --danger: #ff7675;
             --dark: #2d3436; --light: #f9f9f9; --accent: #fdcb6e;
         }
         body {
-            font-family: 'Segoe UI', 'PingFang TC', sans-serif;
+            font-family: 'Segoe UI', 'PingFang TC', 'Microsoft JhengHei', sans-serif;
             background: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%);
             margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh;
         }
@@ -25,14 +25,19 @@
         }
         #chinese-word { font-size: 2.8rem; margin: 0; color: var(--dark); }
         
-        /* 輸入區域排列 */
+        /* 輸入區域與 OK 按鈕排列 */
         .input-group { display: flex; gap: 10px; margin-bottom: 10px; }
         #word-input {
             flex: 1; padding: 15px; font-size: 1.5rem; border: 3px solid #dfe6e9;
             border-radius: 12px; text-align: center; outline: none; box-sizing: border-box;
         }
         #word-input.error { border-color: var(--danger); animation: shake 0.3s; }
-        .btn-ok { background: var(--success); color: white; padding: 0 25px; font-size: 1.2rem; border-radius: 12px; cursor: pointer; border: none; font-weight: bold; }
+        .btn-ok { 
+            background: var(--success); color: white; padding: 0 25px; 
+            font-size: 1.2rem; border-radius: 12px; cursor: pointer; 
+            border: none; font-weight: bold; transition: 0.2s;
+        }
+        .btn-ok:active { transform: scale(0.95); background: #00a383; }
         
         @keyframes shake {
             0%, 100% { transform: translateX(0); }
@@ -57,7 +62,7 @@
 
 <div id="app">
     <div id="start-screen">
-        <h1 style="color: var(--primary); margin-bottom: 5px;">🎧 拼字挑戰 (5分鐘版)</h1>
+        <h1 style="color: var(--primary); margin-bottom: 5px;">🎧 拼字挑戰 (500秒)</h1>
         <div id="status-msg">📡 正在同步雲端資料...</div>
         <button id="start-btn" class="btn btn-primary hidden" onclick="initGame()">開始挑戰</button>
         <div id="pre-leaderboard" class="hidden">
@@ -68,7 +73,7 @@
 
     <div id="game-screen" class="hidden">
         <div class="header-info">
-            <span id="timer" style="color:var(--danger)">⏱ 05:00</span>
+            <span id="timer" style="color:var(--danger)">⏱ 08:20</span>
             <span id="score" style="color:var(--success)">得分: 0</span>
         </div>
         <div class="quiz-container">
@@ -85,12 +90,12 @@
         <h2 style="margin-bottom:10px">挑戰結束</h2>
         <div class="score-detail">
             <div style="display:flex; justify-content: space-between;"><span>答題得分：</span><span id="base-score">0</span></div>
-            <div style="display:flex; justify-content: space-between; color:var(--primary)"><span>時間獎勵：</span><span id="time-bonus">0</span></div>
+            <div style="display:flex; justify-content: space-between; color:var(--primary)"><span>時間獎勵 (秒數×2)：</span><span id="time-bonus">0</span></div>
             <hr style="border:0; border-top:1px solid #ddd; margin:10px 0;">
-            <div style="display:flex; justify-content: space-between; font-weight:bold; font-size:1.2rem;"><span>總分：</span><span id="final-score-val" style="color:var(--success)">0</span></div>
+            <div style="display:flex; justify-content: space-between; font-weight:bold; font-size:1.4rem;"><span>總分：</span><span id="final-score-val" style="color:var(--success)">0</span></div>
         </div>
         <div id="save-area">
-            <input type="text" id="player-name" placeholder="輸入名字" style="padding:10px; border-radius:8px; border:1px solid #ddd; width: 45%;">
+            <input type="text" id="player-name" placeholder="輸入大名" style="padding:10px; border-radius:8px; border:1px solid #ddd; width: 45%;">
             <button class="btn btn-primary" onclick="saveScore()">上傳成績</button>
         </div>
         <div id="wrong-words-section" class="hidden">
@@ -107,7 +112,7 @@
     const API_URL = "https://script.google.com/macros/s/AKfycbz9EaCviDbRaeWOSbOxPTZV69VAwqc8pr5YcboACUDoFWK1Dn1NCza5vnwRDBn21Sk/exec";
 
     let wordBank = [];
-    let score = 0, timeLeft = 300, timerInterval, currentWordObj;
+    let score = 0, timeLeft = 500, timerInterval, currentWordObj;
     let activeQueue = [], historyOfWrongs = new Map();
     const inputEl = document.getElementById('word-input');
 
@@ -130,7 +135,7 @@
                 }
             }
         } catch (e) {
-            msg.innerText = "❌ 無法讀取資料，請檢查網路。";
+            msg.innerText = "❌ 雲端資料同步失敗，請檢查網路。";
         }
     };
 
@@ -143,7 +148,7 @@
     }
 
     function initGame() {
-        score = 0; timeLeft = 300; // 5分鐘
+        score = 0; timeLeft = 500; // 500秒
         activeQueue = [...wordBank].sort(() => Math.random() - 0.5);
         historyOfWrongs.clear();
         document.getElementById('start-screen').classList.add('hidden');
@@ -226,7 +231,7 @@
     async function saveScore() {
         const name = document.getElementById('player-name').value.trim();
         if(!name) { alert("請輸入名字！"); return; }
-        document.getElementById('save-area').innerHTML = "<p>⏳ 上傳中...</p>";
+        document.getElementById('save-area').innerHTML = "<p>⏳ 正在登錄成績...</p>";
         await fetch(API_URL, { method: "POST", mode: "no-cors", body: JSON.stringify({ name: name, score: score }) });
         setTimeout(() => {
             document.getElementById('save-area').innerHTML = "<p style='color:var(--success);'>✅ 上傳成功！</p>";
