@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>美式英語拼字挑戰 - 標準獎勵版</title>
+    <title>美式英語拼字挑戰 - 準確度統計版</title>
     <style>
         :root {
             --primary: #6c5ce7; --success: #00b894; --danger: #ff7675;
@@ -18,7 +18,7 @@
             background: white; width: 95%; max-width: 500px; padding: 25px; border-radius: 24px;
             box-shadow: 0 20px 40px rgba(0,0,0,0.2); text-align: center; margin: 20px 0;
         }
-        .header-info { display: flex; justify-content: space-between; margin-bottom: 20px; font-weight: bold; font-size: 1.2rem; }
+        .header-info { display: flex; justify-content: space-between; margin-bottom: 20px; font-weight: bold; font-size: 1rem; }
         .quiz-container {
             background: var(--light); padding: 30px; border-radius: 16px; margin-bottom: 20px;
             border: 2px solid #eee; position: relative;
@@ -70,6 +70,7 @@
     <div id="game-screen" class="hidden">
         <div class="header-info">
             <span id="timer" style="color:var(--danger)">⏱ 08:20</span>
+            <span id="accuracy-display" style="color:var(--primary)">正確率: 0%</span>
             <span id="score" style="color:var(--success)">得分: 0</span>
         </div>
         <div class="quiz-container">
@@ -85,8 +86,9 @@
     <div id="result-screen" class="hidden">
         <h2 style="margin-bottom:10px">挑戰結束</h2>
         <div class="score-detail">
-            <div style="display:flex; justify-content: space-between;"><span>答題累積得分 (+10/-5)：</span><span id="base-score">0</span></div>
-            <div style="display:flex; justify-content: space-between; color:var(--primary)"><span>剩餘時間加分 (1秒/1分)：</span><span id="time-bonus">0</span></div>
+            <div style="display:flex; justify-content: space-between; margin-bottom:5px;"><span>答題得分 (+10/-5)：</span><span id="base-score">0</span></div>
+            <div style="display:flex; justify-content: space-between; margin-bottom:5px;"><span>答題正確率：</span><span id="final-accuracy" style="font-weight:bold;">0%</span></div>
+            <div style="display:flex; justify-content: space-between; color:var(--primary); margin-bottom:5px;"><span>剩餘時間加分 (1秒/1分)：</span><span id="time-bonus">0</span></div>
             <hr style="border:0; border-top:1px solid #ddd; margin:10px 0;">
             <div style="display:flex; justify-content: space-between; font-weight:bold; font-size:1.5rem;"><span>最終總積分：</span><span id="final-score-val" style="color:var(--success)">0</span></div>
         </div>
@@ -109,6 +111,7 @@
 
     let wordBank = [];
     let score = 0, timeLeft = 500, timerInterval, currentWordObj;
+    let correctCount = 0, totalAnswered = 0;
     let activeQueue = [], historyOfWrongs = new Map();
     const inputEl = document.getElementById('word-input');
 
@@ -141,7 +144,7 @@
     }
 
     function initGame() {
-        score = 0; timeLeft = 500;
+        score = 0; timeLeft = 500; correctCount = 0; totalAnswered = 0;
         activeQueue = [...wordBank].sort(() => Math.random() - 0.5);
         historyOfWrongs.clear();
         document.getElementById('start-screen').classList.add('hidden');
@@ -176,14 +179,20 @@
         const userVal = inputEl.value.trim().toLowerCase();
         const correctVal = currentWordObj.en.trim().toLowerCase();
         
+        totalAnswered++;
         if (userVal === correctVal) {
             score += 10;
+            correctCount++;
         } else {
             score = Math.max(0, score - 5);
             historyOfWrongs.set(currentWordObj.zh, currentWordObj.en);
             inputEl.classList.add('error');
             setTimeout(() => inputEl.classList.remove('error'), 300);
         }
+        
+        // 更新 UI 數據
+        const accuracy = Math.round((correctCount / totalAnswered) * 100);
+        document.getElementById('accuracy-display').innerText = `正確率: ${accuracy}%`;
         document.getElementById('score').innerText = `得分: ${score}`;
         nextQuestion();
     }
@@ -201,11 +210,12 @@
         document.getElementById('game-screen').classList.add('hidden');
         document.getElementById('result-screen').classList.remove('hidden');
 
-        // 改為每秒 1 分
         const timeBonus = Math.max(0, timeLeft); 
         const finalScore = score + timeBonus;
+        const finalAcc = totalAnswered > 0 ? Math.round((correctCount / totalAnswered) * 100) : 0;
         
         document.getElementById('base-score').innerText = score;
+        document.getElementById('final-accuracy').innerText = `${finalAcc}% (${correctCount}/${totalAnswered})`;
         document.getElementById('time-bonus').innerText = `+ ${timeBonus}`;
         document.getElementById('final-score-val').innerText = finalScore;
         score = finalScore;
@@ -227,7 +237,7 @@
         document.getElementById('save-area').innerHTML = "<p>⏳ 儲存中...</p>";
         await fetch(API_URL, { method: "POST", mode: "no-cors", body: JSON.stringify({ name: name, score: score }) });
         setTimeout(() => {
-            document.getElementById('save-area').innerHTML = "<p style='color:var(--success);'>✅ 上傳成功！</p>";
+            document.getElementById('save-area').innerHTML = "<p style='color:var(--success);'>✅ 成功！</p>";
             updateFinalRank();
         }, 1200);
     }
