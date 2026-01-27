@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>美式英語拼字挑戰 - 500秒終極版</title>
+    <title>美式英語拼字挑戰 - 標準獎勵版</title>
     <style>
         :root {
             --primary: #6c5ce7; --success: #00b894; --danger: #ff7675;
@@ -24,8 +24,6 @@
             border: 2px solid #eee; position: relative;
         }
         #chinese-word { font-size: 2.8rem; margin: 0; color: var(--dark); }
-        
-        /* 輸入區域與 OK 按鈕排列 */
         .input-group { display: flex; gap: 10px; margin-bottom: 10px; }
         #word-input {
             flex: 1; padding: 15px; font-size: 1.5rem; border: 3px solid #dfe6e9;
@@ -35,10 +33,8 @@
         .btn-ok { 
             background: var(--success); color: white; padding: 0 25px; 
             font-size: 1.2rem; border-radius: 12px; cursor: pointer; 
-            border: none; font-weight: bold; transition: 0.2s;
+            border: none; font-weight: bold;
         }
-        .btn-ok:active { transform: scale(0.95); background: #00a383; }
-        
         @keyframes shake {
             0%, 100% { transform: translateX(0); }
             25% { transform: translateX(-5px); }
@@ -51,8 +47,8 @@
         .btn-primary { background: var(--primary); color: white; }
         .btn-audio { background: var(--accent); color: #634d00; margin-top: 15px; }
         .scroll-area { max-height: 160px; overflow-y: auto; background: #fafafa; border-radius: 10px; padding: 10px; border: 1px solid #eee; margin-top: 10px; }
-        .leaderboard-table, .wrong-list-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
-        .leaderboard-table td, .wrong-list-table td { padding: 8px; border-bottom: 1px solid #eee; text-align: center; }
+        .leaderboard-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+        .leaderboard-table td { padding: 8px; border-bottom: 1px solid #eee; text-align: center; }
         .hidden { display: none; }
         #status-msg { font-size: 0.9rem; color: #666; margin-bottom: 10px; padding: 15px; background: #f0f0f0; border-radius: 12px; }
         .score-detail { background: var(--light); padding: 15px; border-radius: 12px; margin-bottom: 15px; font-size: 0.9rem; }
@@ -62,8 +58,8 @@
 
 <div id="app">
     <div id="start-screen">
-        <h1 style="color: var(--primary); margin-bottom: 5px;">🎧 拼字挑戰 (500秒)</h1>
-        <div id="status-msg">📡 正在同步雲端資料...</div>
+        <h1 style="color: var(--primary);">🎧 拼字挑戰 (500秒)</h1>
+        <div id="status-msg">📡 正在載入雲端題庫...</div>
         <button id="start-btn" class="btn btn-primary hidden" onclick="initGame()">開始挑戰</button>
         <div id="pre-leaderboard" class="hidden">
             <h3 style="color:var(--primary); font-size:1.1rem; margin-top:20px;">🏆 高手榜 Top 10</h3>
@@ -89,20 +85,20 @@
     <div id="result-screen" class="hidden">
         <h2 style="margin-bottom:10px">挑戰結束</h2>
         <div class="score-detail">
-            <div style="display:flex; justify-content: space-between;"><span>答題得分：</span><span id="base-score">0</span></div>
-            <div style="display:flex; justify-content: space-between; color:var(--primary)"><span>時間獎勵 (秒數×2)：</span><span id="time-bonus">0</span></div>
+            <div style="display:flex; justify-content: space-between;"><span>答題累積得分 (+10/-5)：</span><span id="base-score">0</span></div>
+            <div style="display:flex; justify-content: space-between; color:var(--primary)"><span>剩餘時間加分 (1秒/1分)：</span><span id="time-bonus">0</span></div>
             <hr style="border:0; border-top:1px solid #ddd; margin:10px 0;">
-            <div style="display:flex; justify-content: space-between; font-weight:bold; font-size:1.4rem;"><span>總分：</span><span id="final-score-val" style="color:var(--success)">0</span></div>
+            <div style="display:flex; justify-content: space-between; font-weight:bold; font-size:1.5rem;"><span>最終總積分：</span><span id="final-score-val" style="color:var(--success)">0</span></div>
         </div>
         <div id="save-area">
-            <input type="text" id="player-name" placeholder="輸入大名" style="padding:10px; border-radius:8px; border:1px solid #ddd; width: 45%;">
+            <input type="text" id="player-name" placeholder="輸入名字" style="padding:10px; border-radius:8px; border:1px solid #ddd; width: 45%;">
             <button class="btn btn-primary" onclick="saveScore()">上傳成績</button>
         </div>
         <div id="wrong-words-section" class="hidden">
             <h3 style="margin:20px 0 5px 0; color:var(--danger);">🔍 錯題筆記</h3>
-            <div class="scroll-area"><table class="wrong-list-table"><tbody id="wrong-list-body"></tbody></table></div>
+            <div class="scroll-area"><table class="leaderboard-table"><tbody id="wrong-list-body"></tbody></table></div>
         </div>
-        <h3 style="margin:20px 0 5px 0;">🏆 最新排行榜</h3>
+        <h3 style="margin:20px 0 5px 0;">🏆 總排行榜</h3>
         <div class="scroll-area"><table class="leaderboard-table"><tbody id="end-leaderboard-body"></tbody></table></div>
         <button class="btn btn-primary" style="background:var(--success); width:100%; margin-top:20px;" onclick="location.reload()">再玩一次</button>
     </div>
@@ -125,17 +121,14 @@
             ]);
             wordBank = await wordRes.json();
             const rankData = await rankRes.json();
-
             if (wordBank && wordBank.length > 0) {
-                msg.innerText = `✅ 準備就緒！共有 ${wordBank.length} 個單字`;
+                msg.innerText = "✅ 資料同步成功！";
                 document.getElementById('start-btn').classList.remove('hidden');
-                if (rankData && rankData.length > 0) {
-                    document.getElementById('pre-leaderboard').classList.remove('hidden');
-                    renderTable('start-leaderboard-body', rankData);
-                }
+                if (rankData) renderTable('start-leaderboard-body', rankData);
+                document.getElementById('pre-leaderboard').classList.remove('hidden');
             }
         } catch (e) {
-            msg.innerText = "❌ 雲端資料同步失敗，請檢查網路。";
+            msg.innerText = "❌ 雲端連線失敗。";
         }
     };
 
@@ -143,12 +136,12 @@
         document.getElementById(id).innerHTML = data.map((r, i) => `
             <tr><td style="width:20%; color:#888;">#${i+1}</td>
             <td style="width:50%; text-align:left; font-weight:bold;">${r[0]}</td>
-            <td style="width:30%; color:var(--primary); font-weight:bold;">${r[1]}分</td></tr>
+            <td style="width:30%; color:var(--primary); font-weight:bold;">${r[1]}</td></tr>
         `).join('');
     }
 
     function initGame() {
-        score = 0; timeLeft = 500; // 500秒
+        score = 0; timeLeft = 500;
         activeQueue = [...wordBank].sort(() => Math.random() - 0.5);
         historyOfWrongs.clear();
         document.getElementById('start-screen').classList.add('hidden');
@@ -176,9 +169,7 @@
         setTimeout(speakWord, 300);
     }
 
-    inputEl.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') checkAnswer();
-    });
+    inputEl.addEventListener('keydown', (e) => { if (e.key === 'Enter') checkAnswer(); });
 
     function checkAnswer() {
         if (!currentWordObj) return;
@@ -210,8 +201,10 @@
         document.getElementById('game-screen').classList.add('hidden');
         document.getElementById('result-screen').classList.remove('hidden');
 
-        const timeBonus = Math.max(0, timeLeft * 2);
+        // 改為每秒 1 分
+        const timeBonus = Math.max(0, timeLeft); 
         const finalScore = score + timeBonus;
+        
         document.getElementById('base-score').innerText = score;
         document.getElementById('time-bonus').innerText = `+ ${timeBonus}`;
         document.getElementById('final-score-val').innerText = finalScore;
@@ -231,7 +224,7 @@
     async function saveScore() {
         const name = document.getElementById('player-name').value.trim();
         if(!name) { alert("請輸入名字！"); return; }
-        document.getElementById('save-area').innerHTML = "<p>⏳ 正在登錄成績...</p>";
+        document.getElementById('save-area').innerHTML = "<p>⏳ 儲存中...</p>";
         await fetch(API_URL, { method: "POST", mode: "no-cors", body: JSON.stringify({ name: name, score: score }) });
         setTimeout(() => {
             document.getElementById('save-area').innerHTML = "<p style='color:var(--success);'>✅ 上傳成功！</p>";
