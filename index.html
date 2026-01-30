@@ -3,55 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>美式英語拼字挑戰 - 準確度統計版</title>
+    <title>美式英語挑戰 - 詞性與正確率強化版</title>
     <style>
-        :root {
-            --primary: #6c5ce7; --success: #00b894; --danger: #ff7675;
-            --dark: #2d3436; --light: #f9f9f9; --accent: #fdcb6e;
-        }
-        body {
-            font-family: 'Segoe UI', 'PingFang TC', 'Microsoft JhengHei', sans-serif;
-            background: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%);
-            margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh;
-        }
-        #app {
-            background: white; width: 95%; max-width: 500px; padding: 25px; border-radius: 24px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.2); text-align: center; margin: 20px 0;
-        }
-        .header-info { display: flex; justify-content: space-between; margin-bottom: 20px; font-weight: bold; font-size: 1rem; }
-        .quiz-container {
-            background: var(--light); padding: 30px; border-radius: 16px; margin-bottom: 20px;
-            border: 2px solid #eee; position: relative;
-        }
+        :root { --primary: #6c5ce7; --success: #00b894; --danger: #ff7675; --dark: #2d3436; --light: #f9f9f9; --accent: #fdcb6e; }
+        body { font-family: 'Segoe UI', 'PingFang TC', sans-serif; background: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%); margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        #app { background: white; width: 95%; max-width: 500px; padding: 25px; border-radius: 24px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); text-align: center; margin: 20px 0; }
+        .header-info { display: flex; justify-content: space-between; margin-bottom: 20px; font-weight: bold; font-size: 0.9rem; }
+        .quiz-container { background: var(--light); padding: 25px; border-radius: 16px; margin-bottom: 20px; border: 2px solid #eee; }
         #chinese-word { font-size: 2.8rem; margin: 0; color: var(--dark); }
+        #word-type { color: var(--primary); font-weight: bold; font-size: 1.1rem; margin-top: 5px; }
         .input-group { display: flex; gap: 10px; margin-bottom: 10px; }
-        #word-input {
-            flex: 1; padding: 15px; font-size: 1.5rem; border: 3px solid #dfe6e9;
-            border-radius: 12px; text-align: center; outline: none; box-sizing: border-box;
-        }
+        #word-input { flex: 1; padding: 15px; font-size: 1.5rem; border: 3px solid #dfe6e9; border-radius: 12px; text-align: center; outline: none; }
         #word-input.error { border-color: var(--danger); animation: shake 0.3s; }
-        .btn-ok { 
-            background: var(--success); color: white; padding: 0 25px; 
-            font-size: 1.2rem; border-radius: 12px; cursor: pointer; 
-            border: none; font-weight: bold;
-        }
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-5px); }
-            75% { transform: translateX(5px); }
-        }
-        .btn {
-            cursor: pointer; border: none; padding: 12px 28px; border-radius: 12px;
-            font-size: 1.1rem; font-weight: bold; transition: 0.3s; margin: 5px;
-        }
+        .btn-ok { background: var(--success); color: white; padding: 0 25px; font-size: 1.2rem; border-radius: 12px; cursor: pointer; border: none; font-weight: bold; }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+        .btn { cursor: pointer; border: none; padding: 12px 28px; border-radius: 12px; font-size: 1.1rem; font-weight: bold; transition: 0.3s; margin: 5px; }
         .btn-primary { background: var(--primary); color: white; }
         .btn-audio { background: var(--accent); color: #634d00; margin-top: 15px; }
-        .scroll-area { max-height: 160px; overflow-y: auto; background: #fafafa; border-radius: 10px; padding: 10px; border: 1px solid #eee; margin-top: 10px; }
-        .leaderboard-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
-        .leaderboard-table td { padding: 8px; border-bottom: 1px solid #eee; text-align: center; }
+        .scroll-area { max-height: 180px; overflow-y: auto; background: #fafafa; border-radius: 10px; padding: 10px; border: 1px solid #eee; margin-top: 10px; }
+        .leaderboard-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+        .leaderboard-table th, .leaderboard-table td { padding: 8px; border-bottom: 1px solid #eee; text-align: center; }
         .hidden { display: none; }
-        #status-msg { font-size: 0.9rem; color: #666; margin-bottom: 10px; padding: 15px; background: #f0f0f0; border-radius: 12px; }
-        .score-detail { background: var(--light); padding: 15px; border-radius: 12px; margin-bottom: 15px; font-size: 0.9rem; }
+        .score-detail { background: var(--light); padding: 15px; border-radius: 12px; margin-bottom: 15px; font-size: 0.9rem; text-align: left; }
     </style>
 </head>
 <body>
@@ -59,11 +32,16 @@
 <div id="app">
     <div id="start-screen">
         <h1 style="color: var(--primary);">🎧 拼字挑戰 (500秒)</h1>
-        <div id="status-msg">📡 正在載入雲端題庫...</div>
+        <div id="status-msg" style="font-size: 0.9rem; margin-bottom: 10px;">📡 正在連線雲端...</div>
         <button id="start-btn" class="btn btn-primary hidden" onclick="initGame()">開始挑戰</button>
         <div id="pre-leaderboard" class="hidden">
-            <h3 style="color:var(--primary); font-size:1.1rem; margin-top:20px;">🏆 高手榜 Top 10</h3>
-            <div class="scroll-area"><table class="leaderboard-table"><tbody id="start-leaderboard-body"></tbody></table></div>
+            <h3 style="color:var(--primary); margin-top:20px;">🏆 全球 Top 10 排行</h3>
+            <div class="scroll-area">
+                <table class="leaderboard-table">
+                    <thead><tr><th>名次</th><th>玩家</th><th>分數</th><th>正確率</th></tr></thead>
+                    <tbody id="start-leaderboard-body"></tbody>
+                </table>
+            </div>
         </div>
     </div>
 
@@ -75,6 +53,7 @@
         </div>
         <div class="quiz-container">
             <h2 id="chinese-word">---</h2>
+            <div id="word-type">loading...</div>
             <button class="btn btn-audio" onclick="speakWord()">🔊 聽發音</button>
         </div>
         <div class="input-group">
@@ -84,69 +63,61 @@
     </div>
 
     <div id="result-screen" class="hidden">
-        <h2 style="margin-bottom:10px">挑戰結束</h2>
+        <h2>挑戰結束</h2>
         <div class="score-detail">
-            <div style="display:flex; justify-content: space-between; margin-bottom:5px;"><span>答題得分 (+10/-5)：</span><span id="base-score">0</span></div>
-            <div style="display:flex; justify-content: space-between; margin-bottom:5px;"><span>答題正確率：</span><span id="final-accuracy" style="font-weight:bold;">0%</span></div>
-            <div style="display:flex; justify-content: space-between; color:var(--primary); margin-bottom:5px;"><span>剩餘時間加分 (1秒/1分)：</span><span id="time-bonus">0</span></div>
-            <hr style="border:0; border-top:1px solid #ddd; margin:10px 0;">
-            <div style="display:flex; justify-content: space-between; font-weight:bold; font-size:1.5rem;"><span>最終總積分：</span><span id="final-score-val" style="color:var(--success)">0</span></div>
+            <div>答題得分：<span id="base-score" style="float:right">0</span></div>
+            <div>答題正確率：<span id="final-accuracy" style="float:right">0%</span></div>
+            <div>剩餘時間獎勵：<span id="time-bonus" style="float:right">0</span></div>
+            <hr>
+            <div style="font-weight:bold; font-size:1.4rem;">最終總積分：<span id="final-score-val" style="float:right; color:var(--success)">0</span></div>
         </div>
         <div id="save-area">
             <input type="text" id="player-name" placeholder="輸入名字" style="padding:10px; border-radius:8px; border:1px solid #ddd; width: 45%;">
             <button class="btn btn-primary" onclick="saveScore()">上傳成績</button>
         </div>
-        <div id="wrong-words-section" class="hidden">
-            <h3 style="margin:20px 0 5px 0; color:var(--danger);">🔍 錯題筆記</h3>
-            <div class="scroll-area"><table class="leaderboard-table"><tbody id="wrong-list-body"></tbody></table></div>
+        <h3 style="margin-top:20px;">🏆 排行榜更新</h3>
+        <div class="scroll-area">
+            <table class="leaderboard-table">
+                <thead><tr><th>名次</th><th>玩家</th><th>分數</th><th>正確率</th></tr></thead>
+                <tbody id="end-leaderboard-body"></tbody>
+            </table>
         </div>
-        <h3 style="margin:20px 0 5px 0;">🏆 總排行榜</h3>
-        <div class="scroll-area"><table class="leaderboard-table"><tbody id="end-leaderboard-body"></tbody></table></div>
         <button class="btn btn-primary" style="background:var(--success); width:100%; margin-top:20px;" onclick="location.reload()">再玩一次</button>
     </div>
 </div>
 
 <script>
-    const API_URL = "https://script.google.com/macros/s/AKfycbz9EaCviDbRaeWOSbOxPTZV69VAwqc8pr5YcboACUDoFWK1Dn1NCza5vnwRDBn21Sk/exec";
+    const API_URL = "你的_GOOGLE_APPS_SCRIPT_網址"; // 請換上你的網址
 
-    let wordBank = [];
-    let score = 0, timeLeft = 500, timerInterval, currentWordObj;
-    let correctCount = 0, totalAnswered = 0;
-    let activeQueue = [], historyOfWrongs = new Map();
-    const inputEl = document.getElementById('word-input');
+    let wordBank = [], activeQueue = [], currentWordObj;
+    let score = 0, timeLeft = 500, timerInterval;
+    let correctCount = 0, totalAnswered = 0, finalAcc = 0;
 
     window.onload = async () => {
-        const msg = document.getElementById('status-msg');
         try {
-            const [wordRes, rankRes] = await Promise.all([
-                fetch(`${API_URL}?action=getWords`),
-                fetch(API_URL)
-            ]);
+            const [wordRes, rankRes] = await Promise.all([fetch(`${API_URL}?action=getWords`), fetch(API_URL)]);
             wordBank = await wordRes.json();
             const rankData = await rankRes.json();
-            if (wordBank && wordBank.length > 0) {
-                msg.innerText = "✅ 資料同步成功！";
+            if (wordBank.length > 0) {
+                document.getElementById('status-msg').innerText = "✅ 已準備好 " + wordBank.length + " 個單字";
                 document.getElementById('start-btn').classList.remove('hidden');
-                if (rankData) renderTable('start-leaderboard-body', rankData);
+                if (rankData) renderRankTable('start-leaderboard-body', rankData);
                 document.getElementById('pre-leaderboard').classList.remove('hidden');
             }
-        } catch (e) {
-            msg.innerText = "❌ 雲端連線失敗。";
-        }
+        } catch (e) { document.getElementById('status-msg').innerText = "❌ 無法同步雲端資料"; }
     };
 
-    function renderTable(id, data) {
+    function renderRankTable(id, data) {
         document.getElementById(id).innerHTML = data.map((r, i) => `
-            <tr><td style="width:20%; color:#888;">#${i+1}</td>
-            <td style="width:50%; text-align:left; font-weight:bold;">${r[0]}</td>
-            <td style="width:30%; color:var(--primary); font-weight:bold;">${r[1]}</td></tr>
+            <tr><td>${i+1}</td><td style="font-weight:bold;">${r[0]}</td>
+            <td style="color:var(--primary); font-weight:bold;">${r[1]}</td>
+            <td>${r[3] || '--'}</td></tr>
         `).join('');
     }
 
     function initGame() {
         score = 0; timeLeft = 500; correctCount = 0; totalAnswered = 0;
         activeQueue = [...wordBank].sort(() => Math.random() - 0.5);
-        historyOfWrongs.clear();
         document.getElementById('start-screen').classList.add('hidden');
         document.getElementById('game-screen').classList.remove('hidden');
         nextQuestion();
@@ -156,8 +127,7 @@
     function startTimer() {
         timerInterval = setInterval(() => {
             timeLeft--;
-            let m = Math.floor(timeLeft / 60).toString().padStart(2, '0');
-            let s = (timeLeft % 60).toString().padStart(2, '0');
+            let m = Math.floor(timeLeft / 60).toString().padStart(2, '0'), s = (timeLeft % 60).toString().padStart(2, '0');
             document.getElementById('timer').innerText = `⏱ ${m}:${s}`;
             if (timeLeft <= 0) endGame();
         }, 1000);
@@ -167,32 +137,25 @@
         if (activeQueue.length === 0) { endGame(); return; }
         currentWordObj = activeQueue.shift();
         document.getElementById('chinese-word').innerText = currentWordObj.zh;
-        inputEl.value = "";
-        inputEl.focus();
-        setTimeout(speakWord, 300);
+        document.getElementById('word-type').innerText = "[" + currentWordObj.type + "]";
+        document.getElementById('word-input').value = "";
+        document.getElementById('word-input').focus();
+        speakWord();
     }
 
-    inputEl.addEventListener('keydown', (e) => { if (e.key === 'Enter') checkAnswer(); });
-
     function checkAnswer() {
-        if (!currentWordObj) return;
-        const userVal = inputEl.value.trim().toLowerCase();
-        const correctVal = currentWordObj.en.trim().toLowerCase();
-        
+        const input = document.getElementById('word-input');
+        const userVal = input.value.trim().toLowerCase();
         totalAnswered++;
-        if (userVal === correctVal) {
-            score += 10;
-            correctCount++;
+        if (userVal === currentWordObj.en.toLowerCase()) {
+            score += 10; correctCount++;
         } else {
             score = Math.max(0, score - 5);
-            historyOfWrongs.set(currentWordObj.zh, currentWordObj.en);
-            inputEl.classList.add('error');
-            setTimeout(() => inputEl.classList.remove('error'), 300);
+            input.classList.add('error');
+            setTimeout(() => input.classList.remove('error'), 300);
         }
-        
-        // 更新 UI 數據
-        const accuracy = Math.round((correctCount / totalAnswered) * 100);
-        document.getElementById('accuracy-display').innerText = `正確率: ${accuracy}%`;
+        finalAcc = Math.round((correctCount / totalAnswered) * 100);
+        document.getElementById('accuracy-display').innerText = `正確率: ${finalAcc}%`;
         document.getElementById('score').innerText = `得分: ${score}`;
         nextQuestion();
     }
@@ -200,8 +163,7 @@
     function speakWord() {
         window.speechSynthesis.cancel();
         const utter = new SpeechSynthesisUtterance(currentWordObj.en);
-        utter.lang = 'en-US';
-        utter.rate = 0.85;
+        utter.lang = 'en-US'; utter.rate = 0.8;
         window.speechSynthesis.speak(utter);
     }
 
@@ -209,46 +171,27 @@
         clearInterval(timerInterval);
         document.getElementById('game-screen').classList.add('hidden');
         document.getElementById('result-screen').classList.remove('hidden');
-
-        const timeBonus = Math.max(0, timeLeft); 
-        const finalScore = score + timeBonus;
-        const finalAcc = totalAnswered > 0 ? Math.round((correctCount / totalAnswered) * 100) : 0;
-        
+        const timeBonus = Math.max(0, timeLeft);
         document.getElementById('base-score').innerText = score;
         document.getElementById('final-accuracy').innerText = `${finalAcc}% (${correctCount}/${totalAnswered})`;
-        document.getElementById('time-bonus').innerText = `+ ${timeBonus}`;
-        document.getElementById('final-score-val').innerText = finalScore;
-        score = finalScore;
-
-        if (historyOfWrongs.size > 0) {
-            document.getElementById('wrong-words-section').classList.remove('hidden');
-            let wrongHtml = "";
-            historyOfWrongs.forEach((en, zh) => {
-                wrongHtml += `<tr><td>${zh}</td><td style="color:var(--success); font-weight:bold;">${en}</td></tr>`;
-            });
-            document.getElementById('wrong-list-body').innerHTML = wrongHtml;
-        }
-        updateFinalRank();
+        document.getElementById('time-bonus').innerText = "+ " + timeBonus;
+        score += timeBonus;
+        document.getElementById('final-score-val').innerText = score;
+        updateRank();
     }
 
     async function saveScore() {
         const name = document.getElementById('player-name').value.trim();
-        if(!name) { alert("請輸入名字！"); return; }
-        document.getElementById('save-area').innerHTML = "<p>⏳ 儲存中...</p>";
-        await fetch(API_URL, { method: "POST", mode: "no-cors", body: JSON.stringify({ name: name, score: score }) });
-        setTimeout(() => {
-            document.getElementById('save-area').innerHTML = "<p style='color:var(--success);'>✅ 成功！</p>";
-            updateFinalRank();
-        }, 1200);
+        if(!name) return alert("請輸入名字");
+        document.getElementById('save-area').innerHTML = "⏳ 上傳中...";
+        await fetch(API_URL, { method: "POST", mode: "no-cors", body: JSON.stringify({ name: name, score: score, accuracy: finalAcc }) });
+        setTimeout(() => { document.getElementById('save-area').innerHTML = "✅ 成績已登錄"; updateRank(); }, 1200);
     }
 
-    async function updateFinalRank() {
-        try {
-            const response = await fetch(API_URL);
-            const data = await response.json();
-            renderTable('end-leaderboard-body', data);
-        } catch (e) {}
+    async function updateRank() {
+        try { const res = await fetch(API_URL); const data = await res.json(); renderRankTable('end-leaderboard-body', data); } catch (e) {}
     }
+    document.getElementById('word-input').addEventListener('keydown', (e) => { if(e.key==='Enter') checkAnswer(); });
 </script>
 </body>
 </html>
