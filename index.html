@@ -6,14 +6,14 @@
     <title>美式英語挑戰 - 詞性與正確率強化版</title>
     <style>
         :root { --primary: #6c5ce7; --success: #00b894; --danger: #ff7675; --dark: #2d3436; --light: #f9f9f9; --accent: #fdcb6e; }
-        body { font-family: 'Segoe UI', 'PingFang TC', sans-serif; background: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%); margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        body { font-family: 'Segoe UI', 'PingFang TC', 'Microsoft JhengHei', sans-serif; background: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%); margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
         #app { background: white; width: 95%; max-width: 500px; padding: 25px; border-radius: 24px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); text-align: center; margin: 20px 0; }
         .header-info { display: flex; justify-content: space-between; margin-bottom: 20px; font-weight: bold; font-size: 0.9rem; }
         .quiz-container { background: var(--light); padding: 25px; border-radius: 16px; margin-bottom: 20px; border: 2px solid #eee; }
         #chinese-word { font-size: 2.8rem; margin: 0; color: var(--dark); }
-        #word-type { color: var(--primary); font-weight: bold; font-size: 1.1rem; margin-top: 5px; }
+        #word-type { color: var(--primary); font-weight: bold; font-size: 1.1rem; margin-top: 5px; height: 1.5rem; }
         .input-group { display: flex; gap: 10px; margin-bottom: 10px; }
-        #word-input { flex: 1; padding: 15px; font-size: 1.5rem; border: 3px solid #dfe6e9; border-radius: 12px; text-align: center; outline: none; }
+        #word-input { flex: 1; padding: 15px; font-size: 1.5rem; border: 3px solid #dfe6e9; border-radius: 12px; text-align: center; outline: none; width: 100%; }
         #word-input.error { border-color: var(--danger); animation: shake 0.3s; }
         .btn-ok { background: var(--success); color: white; padding: 0 25px; font-size: 1.2rem; border-radius: 12px; cursor: pointer; border: none; font-weight: bold; }
         @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
@@ -35,7 +35,7 @@
         <div id="status-msg" style="font-size: 0.9rem; margin-bottom: 10px;">📡 正在連線雲端...</div>
         <button id="start-btn" class="btn btn-primary hidden" onclick="initGame()">開始挑戰</button>
         <div id="pre-leaderboard" class="hidden">
-            <h3 style="color:var(--primary); margin-top:20px;">🏆 全球 Top 10 排行</h3>
+            <h3 style="color:var(--primary); margin-top:20px;">🏆 高手榜 Top 10</h3>
             <div class="scroll-area">
                 <table class="leaderboard-table">
                     <thead><tr><th>名次</th><th>玩家</th><th>分數</th><th>正確率</th></tr></thead>
@@ -53,7 +53,7 @@
         </div>
         <div class="quiz-container">
             <h2 id="chinese-word">---</h2>
-            <div id="word-type">loading...</div>
+            <div id="word-type"></div>
             <button class="btn btn-audio" onclick="speakWord()">🔊 聽發音</button>
         </div>
         <div class="input-group">
@@ -63,19 +63,19 @@
     </div>
 
     <div id="result-screen" class="hidden">
-        <h2>挑戰結束</h2>
+        <h2 style="margin-bottom:10px">挑戰結束</h2>
         <div class="score-detail">
-            <div>答題得分：<span id="base-score" style="float:right">0</span></div>
-            <div>答題正確率：<span id="final-accuracy" style="float:right">0%</span></div>
-            <div>剩餘時間獎勵：<span id="time-bonus" style="float:right">0</span></div>
-            <hr>
+            <div style="margin-bottom:5px;">答題累積得分：<span id="base-score" style="float:right">0</span></div>
+            <div style="margin-bottom:5px;">答題正確率：<span id="final-accuracy" style="float:right">0%</span></div>
+            <div style="color:var(--primary); margin-bottom:5px;">剩餘時間獎勵 (1秒/1分)：<span id="time-bonus" style="float:right">0</span></div>
+            <hr style="border:0; border-top:1px solid #ddd; margin:10px 0;">
             <div style="font-weight:bold; font-size:1.4rem;">最終總積分：<span id="final-score-val" style="float:right; color:var(--success)">0</span></div>
         </div>
         <div id="save-area">
             <input type="text" id="player-name" placeholder="輸入名字" style="padding:10px; border-radius:8px; border:1px solid #ddd; width: 45%;">
             <button class="btn btn-primary" onclick="saveScore()">上傳成績</button>
         </div>
-        <h3 style="margin-top:20px;">🏆 排行榜更新</h3>
+        <h3 style="margin-top:20px;">🏆 全球排行榜</h3>
         <div class="scroll-area">
             <table class="leaderboard-table">
                 <thead><tr><th>名次</th><th>玩家</th><th>分數</th><th>正確率</th></tr></thead>
@@ -87,39 +87,52 @@
 </div>
 
 <script>
-    const API_URL = "你的_GOOGLE_APPS_SCRIPT_網址"; // 請換上你的網址
+    // 已更新為您的網址
+    const API_URL = "https://script.google.com/macros/s/AKfycbz9EaCviDbRaeWOSbOxPTZV69VAwqc8pr5YcboACUDoFWK1Dn1NCza5vnwRDBn21Sk/exec";
 
     let wordBank = [], activeQueue = [], currentWordObj;
     let score = 0, timeLeft = 500, timerInterval;
     let correctCount = 0, totalAnswered = 0, finalAcc = 0;
 
     window.onload = async () => {
+        const msg = document.getElementById('status-msg');
         try {
-            const [wordRes, rankRes] = await Promise.all([fetch(`${API_URL}?action=getWords`), fetch(API_URL)]);
+            const [wordRes, rankRes] = await Promise.all([
+                fetch(`${API_URL}?action=getWords`),
+                fetch(API_URL)
+            ]);
             wordBank = await wordRes.json();
             const rankData = await rankRes.json();
-            if (wordBank.length > 0) {
-                document.getElementById('status-msg').innerText = "✅ 已準備好 " + wordBank.length + " 個單字";
+            
+            if (wordBank && wordBank.length > 0) {
+                msg.innerText = "✅ 資料同步成功！";
                 document.getElementById('start-btn').classList.remove('hidden');
                 if (rankData) renderRankTable('start-leaderboard-body', rankData);
                 document.getElementById('pre-leaderboard').classList.remove('hidden');
             }
-        } catch (e) { document.getElementById('status-msg').innerText = "❌ 無法同步雲端資料"; }
+        } catch (e) {
+            msg.innerText = "❌ 連線失敗，請檢查 Apps Script 部署設定。";
+        }
     };
 
     function renderRankTable(id, data) {
         document.getElementById(id).innerHTML = data.map((r, i) => `
-            <tr><td>${i+1}</td><td style="font-weight:bold;">${r[0]}</td>
-            <td style="color:var(--primary); font-weight:bold;">${r[1]}</td>
-            <td>${r[3] || '--'}</td></tr>
+            <tr>
+                <td>${i+1}</td>
+                <td style="font-weight:bold; text-align:left;">${r[0]}</td>
+                <td style="color:var(--primary); font-weight:bold;">${r[1]}</td>
+                <td>${r[3] || '--'}</td>
+            </tr>
         `).join('');
     }
 
     function initGame() {
-        score = 0; timeLeft = 500; correctCount = 0; totalAnswered = 0;
+        score = 0; timeLeft = 500; correctCount = 0; totalAnswered = 0; finalAcc = 0;
         activeQueue = [...wordBank].sort(() => Math.random() - 0.5);
         document.getElementById('start-screen').classList.add('hidden');
         document.getElementById('game-screen').classList.remove('hidden');
+        document.getElementById('accuracy-display').innerText = `正確率: 0%`;
+        document.getElementById('score').innerText = `得分: 0`;
         nextQuestion();
         startTimer();
     }
@@ -127,7 +140,8 @@
     function startTimer() {
         timerInterval = setInterval(() => {
             timeLeft--;
-            let m = Math.floor(timeLeft / 60).toString().padStart(2, '0'), s = (timeLeft % 60).toString().padStart(2, '0');
+            let m = Math.floor(timeLeft / 60).toString().padStart(2, '0');
+            let s = (timeLeft % 60).toString().padStart(2, '0');
             document.getElementById('timer').innerText = `⏱ ${m}:${s}`;
             if (timeLeft <= 0) endGame();
         }, 1000);
@@ -137,7 +151,7 @@
         if (activeQueue.length === 0) { endGame(); return; }
         currentWordObj = activeQueue.shift();
         document.getElementById('chinese-word').innerText = currentWordObj.zh;
-        document.getElementById('word-type').innerText = "[" + currentWordObj.type + "]";
+        document.getElementById('word-type').innerText = currentWordObj.type ? `[${currentWordObj.type}]` : "";
         document.getElementById('word-input').value = "";
         document.getElementById('word-input').focus();
         speakWord();
@@ -146,14 +160,18 @@
     function checkAnswer() {
         const input = document.getElementById('word-input');
         const userVal = input.value.trim().toLowerCase();
+        if (!userVal) return;
+
         totalAnswered++;
         if (userVal === currentWordObj.en.toLowerCase()) {
-            score += 10; correctCount++;
+            score += 10;
+            correctCount++;
         } else {
             score = Math.max(0, score - 5);
             input.classList.add('error');
             setTimeout(() => input.classList.remove('error'), 300);
         }
+        
         finalAcc = Math.round((correctCount / totalAnswered) * 100);
         document.getElementById('accuracy-display').innerText = `正確率: ${finalAcc}%`;
         document.getElementById('score').innerText = `得分: ${score}`;
@@ -163,7 +181,8 @@
     function speakWord() {
         window.speechSynthesis.cancel();
         const utter = new SpeechSynthesisUtterance(currentWordObj.en);
-        utter.lang = 'en-US'; utter.rate = 0.8;
+        utter.lang = 'en-US';
+        utter.rate = 0.85;
         window.speechSynthesis.speak(utter);
     }
 
@@ -171,10 +190,12 @@
         clearInterval(timerInterval);
         document.getElementById('game-screen').classList.add('hidden');
         document.getElementById('result-screen').classList.remove('hidden');
+
         const timeBonus = Math.max(0, timeLeft);
         document.getElementById('base-score').innerText = score;
         document.getElementById('final-accuracy').innerText = `${finalAcc}% (${correctCount}/${totalAnswered})`;
-        document.getElementById('time-bonus').innerText = "+ " + timeBonus;
+        document.getElementById('time-bonus').innerText = `+ ${timeBonus}`;
+        
         score += timeBonus;
         document.getElementById('final-score-val').innerText = score;
         updateRank();
@@ -183,15 +204,31 @@
     async function saveScore() {
         const name = document.getElementById('player-name').value.trim();
         if(!name) return alert("請輸入名字");
-        document.getElementById('save-area').innerHTML = "⏳ 上傳中...";
-        await fetch(API_URL, { method: "POST", mode: "no-cors", body: JSON.stringify({ name: name, score: score, accuracy: finalAcc }) });
-        setTimeout(() => { document.getElementById('save-area').innerHTML = "✅ 成績已登錄"; updateRank(); }, 1200);
+        document.getElementById('save-area').innerHTML = "⏳ 儲存中...";
+        
+        await fetch(API_URL, {
+            method: "POST",
+            mode: "no-cors",
+            body: JSON.stringify({ name: name, score: score, accuracy: finalAcc })
+        });
+        
+        setTimeout(() => {
+            document.getElementById('save-area').innerHTML = "<p style='color:var(--success); font-weight:bold;'>✅ 成績已登錄</p>";
+            updateRank();
+        }, 1200);
     }
 
     async function updateRank() {
-        try { const res = await fetch(API_URL); const data = await res.json(); renderRankTable('end-leaderboard-body', data); } catch (e) {}
+        try {
+            const res = await fetch(API_URL);
+            const data = await res.json();
+            renderRankTable('end-leaderboard-body', data);
+        } catch (e) {}
     }
-    document.getElementById('word-input').addEventListener('keydown', (e) => { if(e.key==='Enter') checkAnswer(); });
+
+    document.getElementById('word-input').addEventListener('keydown', (e) => {
+        if(e.key === 'Enter') checkAnswer();
+    });
 </script>
 </body>
 </html>
