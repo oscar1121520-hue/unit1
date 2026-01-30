@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>美式英語挑戰 - 詞性與正確率強化版</title>
+    <title>美式英語拼字挑戰 - 詞性與正確率版</title>
     <style>
         :root { --primary: #6c5ce7; --success: #00b894; --danger: #ff7675; --dark: #2d3436; --light: #f9f9f9; --accent: #fdcb6e; }
         body { font-family: 'Segoe UI', 'PingFang TC', 'Microsoft JhengHei', sans-serif; background: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%); margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
@@ -32,7 +32,7 @@
 <div id="app">
     <div id="start-screen">
         <h1 style="color: var(--primary);">🎧 拼字挑戰 (500秒)</h1>
-        <div id="status-msg" style="font-size: 0.9rem; margin-bottom: 10px;">📡 正在連線雲端...</div>
+        <div id="status-msg" style="font-size: 0.9rem; margin-bottom: 10px;">📡 正在載入雲端題庫...</div>
         <button id="start-btn" class="btn btn-primary hidden" onclick="initGame()">開始挑戰</button>
         <div id="pre-leaderboard" class="hidden">
             <h3 style="color:var(--primary); margin-top:20px;">🏆 高手榜 Top 10</h3>
@@ -65,7 +65,7 @@
     <div id="result-screen" class="hidden">
         <h2 style="margin-bottom:10px">挑戰結束</h2>
         <div class="score-detail">
-            <div style="margin-bottom:5px;">答題累積得分：<span id="base-score" style="float:right">0</span></div>
+            <div style="margin-bottom:5px;">答題總得分：<span id="base-score" style="float:right">0</span></div>
             <div style="margin-bottom:5px;">答題正確率：<span id="final-accuracy" style="float:right">0%</span></div>
             <div style="color:var(--primary); margin-bottom:5px;">剩餘時間獎勵 (1秒/1分)：<span id="time-bonus" style="float:right">0</span></div>
             <hr style="border:0; border-top:1px solid #ddd; margin:10px 0;">
@@ -75,7 +75,7 @@
             <input type="text" id="player-name" placeholder="輸入名字" style="padding:10px; border-radius:8px; border:1px solid #ddd; width: 45%;">
             <button class="btn btn-primary" onclick="saveScore()">上傳成績</button>
         </div>
-        <h3 style="margin-top:20px;">🏆 全球排行榜</h3>
+        <h3 style="margin-top:20px;">🏆 排行榜更新</h3>
         <div class="scroll-area">
             <table class="leaderboard-table">
                 <thead><tr><th>名次</th><th>玩家</th><th>分數</th><th>正確率</th></tr></thead>
@@ -87,7 +87,7 @@
 </div>
 
 <script>
-    // 已更新為您的網址
+    // 已覆蓋為您提供的網址
     const API_URL = "https://script.google.com/macros/s/AKfycbz9EaCviDbRaeWOSbOxPTZV69VAwqc8pr5YcboACUDoFWK1Dn1NCza5vnwRDBn21Sk/exec";
 
     let wordBank = [], activeQueue = [], currentWordObj;
@@ -105,13 +105,13 @@
             const rankData = await rankRes.json();
             
             if (wordBank && wordBank.length > 0) {
-                msg.innerText = "✅ 資料同步成功！";
+                msg.innerText = "✅ 連線成功！共有 " + wordBank.length + " 個單字";
                 document.getElementById('start-btn').classList.remove('hidden');
                 if (rankData) renderRankTable('start-leaderboard-body', rankData);
                 document.getElementById('pre-leaderboard').classList.remove('hidden');
             }
         } catch (e) {
-            msg.innerText = "❌ 連線失敗，請檢查 Apps Script 部署設定。";
+            msg.innerText = "❌ 無法同步資料，請檢查 Apps Script 的部署設定是否為「所有人」。";
         }
     };
 
@@ -119,7 +119,7 @@
         document.getElementById(id).innerHTML = data.map((r, i) => `
             <tr>
                 <td>${i+1}</td>
-                <td style="font-weight:bold; text-align:left;">${r[0]}</td>
+                <td style="font-weight:bold;">${r[0]}</td>
                 <td style="color:var(--primary); font-weight:bold;">${r[1]}</td>
                 <td>${r[3] || '--'}</td>
             </tr>
@@ -131,8 +131,6 @@
         activeQueue = [...wordBank].sort(() => Math.random() - 0.5);
         document.getElementById('start-screen').classList.add('hidden');
         document.getElementById('game-screen').classList.remove('hidden');
-        document.getElementById('accuracy-display').innerText = `正確率: 0%`;
-        document.getElementById('score').innerText = `得分: 0`;
         nextQuestion();
         startTimer();
     }
