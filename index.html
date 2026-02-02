@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>美式英語拼字挑戰 - 深度檢討版</title>
+    <title>美式英語拼字挑戰 - 手機優化版</title>
     <style>
         :root { --primary: #6c5ce7; --success: #00b894; --danger: #ff7675; --dark: #2d3436; --light: #f9f9f9; --accent: #fdcb6e; }
         body { font-family: 'Segoe UI', 'PingFang TC', 'Microsoft JhengHei', sans-serif; background: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%); margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
@@ -14,6 +14,8 @@
         #word-type { color: var(--primary); font-weight: bold; font-size: 1.1rem; margin-top: 5px; height: 1.5rem; }
         .input-group { display: flex; gap: 10px; margin-bottom: 10px; }
         #word-input { flex: 1; padding: 15px; font-size: 1.5rem; border: 3px solid #dfe6e9; border-radius: 12px; text-align: center; outline: none; width: 100%; }
+        /* 關閉瀏覽器自動大寫提示（雖然 JS 已處理，但這能提供更好體驗） */
+        #word-input { autocapitalize: none; }
         #word-input.error { border-color: var(--danger); animation: shake 0.3s; }
         .btn-ok { background: var(--success); color: white; padding: 0 25px; font-size: 1.2rem; border-radius: 12px; cursor: pointer; border: none; font-weight: bold; }
         @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
@@ -55,7 +57,7 @@
             <button class="btn btn-audio" onclick="speakWord()">🔊 聽發音</button>
         </div>
         <div class="input-group">
-            <input type="text" id="word-input" placeholder="請拼字..." autocomplete="off">
+            <input type="text" id="word-input" placeholder="請拼字..." autocomplete="off" autocapitalize="off" spellcheck="false">
             <button class="btn-ok" onclick="checkAnswer()">OK</button>
         </div>
     </div>
@@ -64,7 +66,7 @@
         <h2 style="margin-bottom:15px;">挑戰結束</h2>
         
         <div id="wrong-summary-area" class="wrong-box hidden">
-            <h3 style="margin-top:0; color:var(--danger); font-size:1.1rem;">🔍 錯題對照 (請記住正確拼法)</h3>
+            <h3 style="margin-top:0; color:var(--danger); font-size:1.1rem;">🔍 錯題對照</h3>
             <div class="scroll-area" style="background: white;">
                 <table class="wrong-table">
                     <thead><tr style="background:#f8f8f8;"><th>題目</th><th>你的答案</th><th>正確答案</th></tr></thead>
@@ -151,16 +153,16 @@
 
     function checkAnswer() {
         const input = document.getElementById('word-input');
-        const userVal = input.value.trim();
-        if (!userVal) return;
+        const userRawVal = input.value.trim();
+        if (!userRawVal) return;
 
         totalAnswered++;
-        if (userVal.toLowerCase() === currentWordObj.en.toLowerCase()) {
+        // 重點：將輸入與正確答案都轉為小寫比較，徹底解決首字大寫問題
+        if (userRawVal.toLowerCase() === currentWordObj.en.trim().toLowerCase()) {
             score += 10; correctCount++;
         } else {
             score = Math.max(0, score - 5);
-            // 同時儲存使用者的錯誤答案與正確答案
-            wrongList.push({ zh: currentWordObj.zh, en: currentWordObj.en, user: userVal }); 
+            wrongList.push({ zh: currentWordObj.zh, en: currentWordObj.en, user: userRawVal }); 
             input.classList.add('error');
             setTimeout(() => input.classList.remove('error'), 300);
         }
@@ -181,18 +183,12 @@
         clearInterval(timerInterval);
         document.getElementById('game-screen').classList.add('hidden');
         document.getElementById('result-screen').classList.remove('hidden');
-
         if (wrongList.length > 0) {
             document.getElementById('wrong-summary-area').classList.remove('hidden');
             document.getElementById('wrong-summary-body').innerHTML = wrongList.map(item => `
-                <tr>
-                    <td>${item.zh}</td>
-                    <td><span class="txt-wrong">${item.user}</span></td>
-                    <td><span class="txt-correct">${item.en}</span></td>
-                </tr>
+                <tr><td>${item.zh}</td><td><span class="txt-wrong">${item.user}</span></td><td><span class="txt-correct">${item.en}</span></td></tr>
             `).join('');
         }
-
         const timeBonus = Math.max(0, timeLeft);
         document.getElementById('base-score').innerText = score;
         document.getElementById('final-accuracy').innerText = `${finalAcc}% (${correctCount}/${totalAnswered})`;
