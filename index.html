@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>美式英語雙模挑戰 - 最終完整版</title>
+    <title>英語雙模挑戰 - 雙積分版</title>
     <style>
         :root { --primary: #6c5ce7; --success: #00b894; --danger: #ff7675; --dark: #2d3436; --light: #f9f9f9; --accent: #fdcb6e; }
         body { font-family: 'Segoe UI', 'PingFang TC', 'Microsoft JhengHei', sans-serif; background: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%); margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
@@ -24,7 +24,7 @@
         .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .option-btn { padding: 12px; background: white; border: 2px solid #dfe6e9; border-radius: 12px; cursor: pointer; font-size: 1rem; transition: 0.2s; }
         .option-btn:hover { border-color: var(--primary); background: #f8f8ff; }
-        .option-btn.wrong { background: var(--danger); color: white; border-color: var(--danger); }
+        .option-btn.wrong { background: var(--danger); color: white; border-color: var(--danger); animation: shake 0.3s; }
 
         /* 排行榜分頁 */
         .rank-tabs { display: flex; gap: 5px; margin-top: 20px; }
@@ -41,8 +41,6 @@
 
         .hidden { display: none; }
         .btn { cursor: pointer; border: none; padding: 12px 28px; border-radius: 12px; font-weight: bold; transition: 0.3s; }
-        .penalty-flash { color: var(--danger); animation: flash 0.5s; font-size: 1.2rem; }
-        @keyframes flash { 50% { opacity: 0; } }
         @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
         .shake { animation: shake 0.3s; }
     </style>
@@ -57,16 +55,16 @@
         <div id="mode-select" class="hidden">
             <div class="mode-container">
                 <div class="btn-mode" onclick="setupGame(1)">
-                    <h3>模式 A</h3><p>拼字挑戰<br>(500秒比積分)</p>
+                    <h3>模式 A</h3><p>拼字挑戰<br>(500秒積分制)</p>
                 </div>
                 <div class="btn-mode" onclick="setupGame(2)">
-                    <h3>模式 B</h3><p>辨認挑戰<br>(全題數比速度)</p>
+                    <h3>模式 B</h3><p>辨認挑戰<br>(500秒積分制)</p>
                 </div>
             </div>
 
             <div class="rank-tabs">
                 <div id="tabA" class="rank-tab active" onclick="switchTab('A')">拼字排行榜</div>
-                <div id="tabB" class="rank-tab" onclick="switchTab('B')">辨認速度榜</div>
+                <div id="tabB" class="rank-tab" onclick="switchTab('B')">辨認排行榜</div>
             </div>
             <div class="scroll-area">
                 <table id="rank-body" class="rank-table"></table>
@@ -76,7 +74,7 @@
 
     <div id="game-screen" class="hidden">
         <div class="header-info">
-            <span id="timer-display">⏱ 載入中...</span>
+            <span id="timer-display" style="color: var(--danger);">⏱ 倒數: 500s</span>
             <span id="score-info">得分: 0</span>
         </div>
         <div class="quiz-container">
@@ -101,7 +99,7 @@
         <h2 id="result-title">挑戰結束</h2>
         
         <div id="wrong-summary-area" class="wrong-box hidden">
-            <h3 style="margin:0 0 10px; color:var(--danger); font-size:1rem;">🔍 錯題對照 (請記住正確拼法)</h3>
+            <h3 style="margin:0 0 10px; color:var(--danger); font-size:1rem;">🔍 錯題對照</h3>
             <div class="scroll-area" style="background:white;">
                 <table class="wrong-table">
                     <thead><tr style="background:#f8f8f8;"><th>題目</th><th>你的答案</th><th>正確答案</th></tr></thead>
@@ -121,64 +119,46 @@
 </div>
 
 <script>
-    // 固定的 API 網址
     const API_URL = "https://script.google.com/macros/s/AKfycbz9EaCviDbRaeWOSbOxPTZV69VAwqc8pr5YcboACUDoFWK1Dn1NCza5vnwRDBn21Sk/exec";
     
     let wordBank = [], activeQueue = [], currentWordObj;
-    let gameMode = 1, timer = 0, score = 0, correctCount = 0, totalAnswered = 0, penalties = 0, timerInterval;
+    let gameMode = 1, timer = 500, score = 0, correctCount = 0, totalAnswered = 0, timerInterval;
     let wrongList = [], rankDataCache = { rankA: [], rankB: [] };
 
     window.onload = async () => {
         try {
-            const [wordRes, rankRes] = await Promise.all([
-                fetch(`${API_URL}?action=getWords`),
-                fetch(API_URL)
-            ]);
+            const [wordRes, rankRes] = await Promise.all([fetch(`${API_URL}?action=getWords`), fetch(API_URL)]);
             wordBank = await wordRes.json();
             rankDataCache = await rankRes.json();
-            
-            if (wordBank && wordBank.length > 0) {
-                document.getElementById('status-msg').classList.add('hidden');
-                document.getElementById('mode-select').classList.remove('hidden');
-                switchTab('A');
-            } else {
-                document.getElementById('status-msg').innerText = "⚠ 題庫目前是空的。";
-            }
-        } catch (e) {
-            document.getElementById('status-msg').innerText = "❌ 連線失敗，請檢查網路或 API 部署。";
-            console.error(e);
-        }
+            document.getElementById('status-msg').classList.add('hidden');
+            document.getElementById('mode-select').classList.remove('hidden');
+            switchTab('A');
+        } catch (e) { document.getElementById('status-msg').innerText = "❌ 連線失敗"; }
     };
 
     function switchTab(type) {
         document.getElementById('tabA').classList.toggle('active', type === 'A');
         document.getElementById('tabB').classList.toggle('active', type === 'B');
         const data = (type === 'A') ? rankDataCache.rankA : rankDataCache.rankB;
-        const unit = (type === 'A') ? "分" : "秒";
-        
         document.getElementById('rank-body').innerHTML = (data && data.length > 0) ? 
-            data.map((r, i) => `<tr><td>${i+1}. ${r[0]}</td><td align="right"><b>${r[1]}</b> ${unit} (${r[3] || '0%'})</td></tr>`).join('') :
+            data.map((r, i) => `<tr><td>${i+1}. ${r[0]}</td><td align="right"><b>${r[1]}</b> 分 (${r[3] || '0%'})</td></tr>`).join('') :
             '<tr><td colspan="2">暫無數據</td></tr>';
     }
 
     function setupGame(mode) {
         gameMode = mode;
-        score = 0; correctCount = 0; totalAnswered = 0; penalties = 0; wrongList = [];
+        score = 0; correctCount = 0; totalAnswered = 0; timer = 500; wrongList = [];
         activeQueue = [...wordBank].sort(() => Math.random() - 0.5);
         
         document.getElementById('start-screen').classList.add('hidden');
         document.getElementById('game-screen').classList.remove('hidden');
         
         if (mode === 1) {
-            timer = 500;
             document.getElementById('mode1-input').classList.remove('hidden');
             document.getElementById('mode2-options').classList.add('hidden');
-            document.getElementById('score-info').innerText = "得分: 0";
         } else {
-            timer = 0;
             document.getElementById('mode2-options').classList.remove('hidden');
             document.getElementById('mode1-input').classList.add('hidden');
-            document.getElementById('score-info').innerText = `進度: 0 / ${wordBank.length}`;
         }
         
         nextQuestion();
@@ -188,13 +168,11 @@
     function startTimer() {
         if (timerInterval) clearInterval(timerInterval);
         timerInterval = setInterval(() => {
-            if (gameMode === 1) {
-                if (timer > 0) timer--;
-                else endGame();
+            if (timer > 0) {
+                timer--;
                 document.getElementById('timer-display').innerText = `⏱ 倒數: ${timer}s`;
             } else {
-                timer++;
-                document.getElementById('timer-display').innerText = `⏱ 耗時: ${timer}s`;
+                endGame();
             }
         }, 1000);
     }
@@ -205,13 +183,12 @@
         
         const displayWordEl = document.getElementById('display-word');
         const wordTypeEl = document.getElementById('word-type');
-        const inputEl = document.getElementById('word-input');
 
         if (gameMode === 1) {
             displayWordEl.innerText = currentWordObj.zh;
             wordTypeEl.innerText = currentWordObj.type ? `[${currentWordObj.type}]` : "";
-            inputEl.value = ""; 
-            inputEl.focus();
+            document.getElementById('word-input').value = ""; 
+            document.getElementById('word-input').focus();
         } else {
             displayWordEl.innerText = currentWordObj.en;
             wordTypeEl.innerText = "";
@@ -220,51 +197,45 @@
         speakWord();
     }
 
+    // 拼字模式 A 判斷
     function checkAnswerMode1() {
         const input = document.getElementById('word-input');
         const rawVal = input.value.trim();
         if (!rawVal) return;
-
         totalAnswered++;
-        // 不分大小寫判定
         if (rawVal.toLowerCase() === currentWordObj.en.toLowerCase()) {
             score += 10; correctCount++;
+            nextQuestion();
         } else {
             score = Math.max(0, score - 5);
             wrongList.push({ zh: currentWordObj.zh, en: currentWordObj.en, user: rawVal });
             input.classList.add('shake');
-            setTimeout(() => input.classList.remove('shake'), 300);
+            setTimeout(() => { input.classList.remove('shake'); nextQuestion(); }, 300);
         }
         document.getElementById('score-info').innerText = "得分: " + score;
-        nextQuestion();
     }
 
+    // 辨認模式 B 選項生成
     function generateOptions() {
         const container = document.getElementById('options-container');
         container.innerHTML = "";
-        
-        let dists = wordBank
-            .filter(w => w.zh !== currentWordObj.zh)
-            .sort(() => Math.random() - 0.5)
-            .slice(0, 9)
-            .map(w => w.zh);
-        
+        let dists = wordBank.filter(w => w.zh !== currentWordObj.zh).sort(()=>Math.random()-0.5).slice(0, 9).map(w=>w.zh);
         let choices = [...dists, currentWordObj.zh].sort(() => Math.random() - 0.5);
-        
         choices.forEach(c => {
             const btn = document.createElement('button');
             btn.className = "option-btn"; btn.innerText = c;
             btn.onclick = () => {
+                totalAnswered++;
                 if (c === currentWordObj.zh) { 
-                    correctCount++; 
-                    document.getElementById('score-info').innerText = `進度: ${correctCount} / ${wordBank.length}`;
+                    score += 10; correctCount++;
                     nextQuestion(); 
                 } else { 
-                    penalties++; timer += 3;
-                    document.getElementById('timer-display').classList.add('penalty-flash');
-                    setTimeout(() => document.getElementById('timer-display').classList.remove('penalty-flash'), 500);
-                    btn.classList.add('wrong'); btn.disabled = true;
+                    score = Math.max(0, score - 5);
+                    wrongList.push({ zh: currentWordObj.zh, en: currentWordObj.en, user: c });
+                    btn.classList.add('wrong'); 
+                    setTimeout(() => nextQuestion(), 300);
                 }
+                document.getElementById('score-info').innerText = "得分: " + score;
             };
             container.appendChild(btn);
         });
@@ -282,56 +253,41 @@
         document.getElementById('game-screen').classList.add('hidden');
         document.getElementById('result-screen').classList.remove('hidden');
         
-        const summaryArea = document.getElementById('wrong-summary-area');
         if (wrongList.length > 0) {
-            summaryArea.classList.remove('hidden');
+            document.getElementById('wrong-summary-area').classList.remove('hidden');
             document.getElementById('wrong-summary-body').innerHTML = wrongList.map(item => `
                 <tr><td>${item.zh}</td><td><span class="txt-wrong">${item.user}</span></td><td><span class="txt-correct">${item.en}</span></td></tr>
             `).join('');
-        } else {
-            summaryArea.classList.add('hidden');
         }
 
-        let finalValue = (gameMode === 1) ? (score + timer) : timer;
-        document.getElementById('result-stats').innerHTML = (gameMode === 1) ? 
-            `模式：拼字挑戰<br>答題得分：${score}<br>時間獎勵：${timer}<br><b>最終總積分：${finalValue}</b>` : 
-            `模式：辨認挑戰<br>答題數量：${correctCount}<br>錯誤次數：${penalties}<br><b>最終總耗時：${finalValue} 秒</b>`;
+        const timeBonus = timer; // 剩餘時間獎勵
+        const finalScore = score + timeBonus;
+        document.getElementById('result-stats').innerHTML = 
+            `模式：${gameMode === 1 ? '拼字挑戰' : '辨認挑戰'}<br>` +
+            `答題積分：${score}<br>` +
+            `時間獎勵：+${timeBonus}<br>` +
+            `<b>最終總積分：${finalScore}</b>`;
         
-        // 暫存最終分數用於上傳
-        score = finalValue;
+        score = finalScore;
     }
 
     async function saveScore() {
         const name = document.getElementById('player-name').value.trim();
         if(!name) return alert("請輸入名字");
-        
-        const saveArea = document.getElementById('save-area');
-        saveArea.innerHTML = "⏳ 正在同步至雲端...";
-        
-        const totalAttempts = (gameMode === 1) ? totalAnswered : (correctCount + penalties);
-        const acc = Math.round((correctCount / (totalAttempts || 1)) * 100) + "%";
-        
+        document.getElementById('save-area').innerHTML = "⏳ 正在同步至雲端...";
+        const acc = Math.round((correctCount / (totalAnswered || 1)) * 100) + "%";
         try {
             await fetch(API_URL, { 
-                method: "POST", 
-                mode: "no-cors", 
-                body: JSON.stringify({ 
-                    name: name, 
-                    score: score, 
-                    accuracy: acc, 
-                    mode: (gameMode === 1 ? "拼字" : "辨認") 
-                }) 
+                method: "POST", mode: "no-cors", 
+                body: JSON.stringify({ name: name, score: score, accuracy: acc, mode: (gameMode === 1 ? "拼字" : "辨認") }) 
             });
-            saveArea.innerHTML = "<p style='color:var(--success); font-weight:bold;'>✅ 成績登錄成功！</p>";
+            document.getElementById('save-area').innerHTML = "<p style='color:var(--success); font-weight:bold;'>✅ 成績登錄成功！</p>";
         } catch (e) {
-            saveArea.innerHTML = "<p style='color:var(--danger);'>❌ 上傳失敗，請稍後再試。</p>";
+            document.getElementById('save-area').innerHTML = "<p style='color:var(--danger);'>❌ 上傳失敗</p>";
         }
     }
 
-    // 支援 Enter 鍵送出
-    document.getElementById('word-input').addEventListener('keydown', (e) => { 
-        if(e.key === 'Enter') checkAnswerMode1(); 
-    });
+    document.getElementById('word-input').addEventListener('keydown', (e) => { if(e.key === 'Enter') checkAnswerMode1(); });
 </script>
 </body>
 </html>
