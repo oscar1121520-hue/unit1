@@ -3,41 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>英語雙模挑戰 - 雙積分版</title>
+    <title>英語三模強化挑戰賽 - 最終整合版</title>
     <style>
         :root { --primary: #6c5ce7; --success: #00b894; --danger: #ff7675; --dark: #2d3436; --light: #f9f9f9; --accent: #fdcb6e; }
         body { font-family: 'Segoe UI', 'PingFang TC', 'Microsoft JhengHei', sans-serif; background: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%); margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-        #app { background: white; width: 95%; max-width: 600px; padding: 25px; border-radius: 24px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); text-align: center; margin: 20px 0; }
+        #app { background: white; width: 95%; max-width: 650px; padding: 25px; border-radius: 24px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); text-align: center; margin: 20px 0; }
         
         /* 模式選擇鈕 */
-        .mode-container { display: flex; gap: 15px; justify-content: center; margin: 20px 0; }
-        .btn-mode { flex: 1; padding: 20px; border-radius: 16px; border: 2px solid #eee; cursor: pointer; transition: 0.3s; background: white; }
+        .mode-container { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin: 20px 0; }
+        .btn-mode { padding: 15px 10px; border-radius: 16px; border: 2px solid #eee; cursor: pointer; transition: 0.3s; background: white; }
         .btn-mode:hover { border-color: var(--primary); transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
-        .btn-mode h3 { margin: 0 0 10px 0; color: var(--primary); }
+        .btn-mode h3 { margin: 0 0 5px 0; color: var(--primary); font-size: 1.1rem; }
+        .btn-mode p { margin: 0; font-size: 0.75rem; color: #666; line-height: 1.3; }
 
         /* 遊戲介面 */
         .header-info { display: flex; justify-content: space-between; margin-bottom: 20px; font-weight: bold; }
-        .quiz-container { background: var(--light); padding: 25px; border-radius: 16px; margin-bottom: 20px; border: 2px solid #eee; }
+        .quiz-container { background: var(--light); padding: 25px; border-radius: 16px; margin-bottom: 20px; border: 2px solid #eee; min-height: 150px; display: flex; flex-direction: column; justify-content: center; align-items: center; }
         #display-word { font-size: 2.8rem; margin: 0; color: var(--dark); word-break: break-all; }
+        .listen-hint { font-size: 5rem; cursor: pointer; transition: 0.2s; user-select: none; }
+        .listen-hint:active { transform: scale(0.9); }
         
-        /* 模式二選項 */
+        /* 選項按鈕 */
         .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .option-btn { padding: 12px; background: white; border: 2px solid #dfe6e9; border-radius: 12px; cursor: pointer; font-size: 1rem; transition: 0.2s; }
         .option-btn:hover { border-color: var(--primary); background: #f8f8ff; }
-        .option-btn.wrong { background: var(--danger); color: white; border-color: var(--danger); animation: shake 0.3s; }
+        .option-btn.wrong { background: var(--danger); color: white; border-color: var(--danger); }
 
-        /* 排行榜分頁 */
-        .rank-tabs { display: flex; gap: 5px; margin-top: 20px; }
-        .rank-tab { flex: 1; padding: 10px; font-size: 0.85rem; background: #eee; cursor: pointer; border-radius: 8px 8px 0 0; font-weight: bold; }
+        /* 排行榜 */
+        .rank-tabs { display: flex; gap: 4px; margin-top: 20px; }
+        .rank-tab { flex: 1; padding: 10px 5px; font-size: 0.75rem; background: #eee; cursor: pointer; border-radius: 8px 8px 0 0; font-weight: bold; }
         .rank-tab.active { background: var(--primary); color: white; }
-        .scroll-area { max-height: 220px; overflow-y: auto; background: #fafafa; border: 1px solid #eee; border-radius: 0 0 10px 10px; padding: 10px; }
+        .scroll-area { max-height: 200px; overflow-y: auto; background: #fafafa; border: 1px solid #eee; border-radius: 0 0 10px 10px; padding: 10px; }
         .rank-table, .wrong-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
         .rank-table td, .wrong-table td { padding: 8px; border-bottom: 1px solid #eee; }
         
-        /* 錯題對照 */
         .wrong-box { background: #fff5f5; border: 2px solid #ff7675; border-radius: 16px; padding: 15px; margin-bottom: 20px; }
         .txt-wrong { color: var(--danger); text-decoration: line-through; font-size: 0.8rem; display: block; }
-        .txt-correct { color: var(--success); font-weight: bold; font-size: 1rem; }
+        .txt-correct { color: var(--success); font-weight: bold; }
 
         .hidden { display: none; }
         .btn { cursor: pointer; border: none; padding: 12px 28px; border-radius: 12px; font-weight: bold; transition: 0.3s; }
@@ -49,67 +51,62 @@
 
 <div id="app">
     <div id="start-screen">
-        <h1 style="color: var(--primary);">🎧 英語雙模挑戰</h1>
-        <div id="status-msg">📡 正在載入雲端題庫...</div>
+        <h1 style="color: var(--primary); margin-bottom: 5px;">🎓 英語能力三模挑戰</h1>
+        <div id="status-msg" style="font-size: 0.8rem;">📡 載入雲端題庫中...</div>
         
         <div id="mode-select" class="hidden">
             <div class="mode-container">
                 <div class="btn-mode" onclick="setupGame(1)">
-                    <h3>模式 A</h3><p>拼字挑戰<br>(500秒積分制)</p>
+                    <h3>模式 A</h3><p>拼字挑戰<br>(看中拼英)</p>
                 </div>
                 <div class="btn-mode" onclick="setupGame(2)">
-                    <h3>模式 B</h3><p>辨認挑戰<br>(500秒積分制)</p>
+                    <h3>模式 B</h3><p>辨認挑戰<br>(看英選中)</p>
+                </div>
+                <div class="btn-mode" onclick="setupGame(3)">
+                    <h3>模式 C</h3><p>聽力挑戰<br>(聽音選義)</p>
                 </div>
             </div>
 
             <div class="rank-tabs">
-                <div id="tabA" class="rank-tab active" onclick="switchTab('A')">拼字排行榜</div>
-                <div id="tabB" class="rank-tab" onclick="switchTab('B')">辨認排行榜</div>
+                <div id="tabA" class="rank-tab active" onclick="switchTab('A')">拼字榜</div>
+                <div id="tabB" class="rank-tab" onclick="switchTab('B')">辨認榜</div>
+                <div id="tabC" class="rank-tab" onclick="switchTab('C')">聽力榜</div>
             </div>
-            <div class="scroll-area">
-                <table id="rank-body" class="rank-table"></table>
-            </div>
+            <div class="scroll-area"><table id="rank-body" class="rank-table"></table></div>
         </div>
     </div>
 
     <div id="game-screen" class="hidden">
         <div class="header-info">
-            <span id="timer-display" style="color: var(--danger);">⏱ 倒數: 500s</span>
-            <span id="score-info">得分: 0</span>
+            <span id="timer-display" style="color: var(--danger);">⏱ 500s</span>
+            <span id="score-info">積分: 0</span>
         </div>
         <div class="quiz-container">
             <h2 id="display-word">---</h2>
-            <div id="word-type" style="color:var(--primary); font-weight:bold; height:1.2rem; margin-top:5px;"></div>
-            <button class="btn" style="background:var(--accent); margin-top:15px;" onclick="speakWord()">🔊 聽發音</button>
+            <div id="word-type" style="color:var(--primary); font-weight:bold; margin-top:5px;"></div>
+            <div id="listen-icon" class="listen-hint hidden" onclick="speakWord()">🔊</div>
+            <button id="repeat-btn" class="btn" style="background:var(--accent); margin-top:15px;" onclick="speakWord()">🔊 重聽發音</button>
         </div>
 
-        <div id="mode1-input" class="hidden">
+        <div id="mode-a-input" class="hidden">
             <div style="display:flex; gap:10px;">
-                <input type="text" id="word-input" placeholder="請拼字..." style="flex:1; padding:15px; font-size:1.5rem; border:2px solid #ddd; border-radius:12px; text-align:center;" autocapitalize="off" spellcheck="false" autocomplete="off">
-                <button class="btn" style="background:var(--success); color:white;" onclick="checkAnswerMode1()">OK</button>
+                <input type="text" id="word-input" placeholder="請拼寫英文..." style="flex:1; padding:15px; font-size:1.5rem; border:2px solid #ddd; border-radius:12px; text-align:center;" autocapitalize="off" spellcheck="false" autocomplete="off">
+                <button class="btn" style="background:var(--success); color:white;" onclick="checkAnswerModeA()">OK</button>
             </div>
         </div>
 
-        <div id="mode2-options" class="hidden">
+        <div id="mode-bc-options" class="hidden">
             <div class="options-grid" id="options-container"></div>
         </div>
     </div>
 
     <div id="result-screen" class="hidden">
-        <h2 id="result-title">挑戰結束</h2>
-        
+        <h2>挑戰結束</h2>
         <div id="wrong-summary-area" class="wrong-box hidden">
-            <h3 style="margin:0 0 10px; color:var(--danger); font-size:1rem;">🔍 錯題對照</h3>
-            <div class="scroll-area" style="background:white;">
-                <table class="wrong-table">
-                    <thead><tr style="background:#f8f8f8;"><th>題目</th><th>你的答案</th><th>正確答案</th></tr></thead>
-                    <tbody id="wrong-summary-body"></tbody>
-                </table>
-            </div>
+            <h3 style="margin:0 0 10px; color:var(--danger); font-size:0.9rem;">🔍 錯題回顧</h3>
+            <div class="scroll-area" style="background:white;"><table class="wrong-table"><tbody id="wrong-summary-body"></tbody></table></div>
         </div>
-
         <div id="result-stats" style="background: var(--light); padding:15px; border-radius:12px; text-align:left; margin-bottom:20px; border:1px solid #ddd;"></div>
-        
         <div id="save-area">
             <input type="text" id="player-name" placeholder="輸入名字登錄成績" style="padding:10px; border-radius:8px; border:1px solid #ddd; width: 60%; margin-bottom:10px;">
             <button class="btn" style="background:var(--primary); color:white; width:100%;" onclick="saveScore()">上傳成績</button>
@@ -123,43 +120,37 @@
     
     let wordBank = [], activeQueue = [], currentWordObj;
     let gameMode = 1, timer = 500, score = 0, correctCount = 0, totalAnswered = 0, timerInterval;
-    let wrongList = [], rankDataCache = { rankA: [], rankB: [] };
+    let wrongList = [], rankCache = { rankA: [], rankB: [], rankC: [] };
 
     window.onload = async () => {
         try {
             const [wordRes, rankRes] = await Promise.all([fetch(`${API_URL}?action=getWords`), fetch(API_URL)]);
             wordBank = await wordRes.json();
-            rankDataCache = await rankRes.json();
+            const ranks = await rankRes.json();
+            rankCache = { rankA: ranks.rankA || [], rankB: ranks.rankB || [], rankC: ranks.rankC || [] };
             document.getElementById('status-msg').classList.add('hidden');
             document.getElementById('mode-select').classList.remove('hidden');
             switchTab('A');
-        } catch (e) { document.getElementById('status-msg').innerText = "❌ 連線失敗"; }
+        } catch (e) { document.getElementById('status-msg').innerText = "❌ 無法連線至資料庫"; }
     };
 
     function switchTab(type) {
-        document.getElementById('tabA').classList.toggle('active', type === 'A');
-        document.getElementById('tabB').classList.toggle('active', type === 'B');
-        const data = (type === 'A') ? rankDataCache.rankA : rankDataCache.rankB;
-        document.getElementById('rank-body').innerHTML = (data && data.length > 0) ? 
-            data.map((r, i) => `<tr><td>${i+1}. ${r[0]}</td><td align="right"><b>${r[1]}</b> 分 (${r[3] || '0%'})</td></tr>`).join('') :
-            '<tr><td colspan="2">暫無數據</td></tr>';
+        ['A','B','C'].forEach(t => document.getElementById('tab'+t).classList.toggle('active', type === t));
+        const data = rankCache['rank'+type];
+        document.getElementById('rank-body').innerHTML = data.length ? data.map((r,i)=>`<tr><td>${i+1}. ${r[0]}</td><td align="right"><b>${r[1]}</b> 分</td></tr>`).join('') : '<tr><td>暫無排名</td></tr>';
     }
 
     function setupGame(mode) {
         gameMode = mode;
         score = 0; correctCount = 0; totalAnswered = 0; timer = 500; wrongList = [];
         activeQueue = [...wordBank].sort(() => Math.random() - 0.5);
-        
         document.getElementById('start-screen').classList.add('hidden');
         document.getElementById('game-screen').classList.remove('hidden');
         
-        if (mode === 1) {
-            document.getElementById('mode1-input').classList.remove('hidden');
-            document.getElementById('mode2-options').classList.add('hidden');
-        } else {
-            document.getElementById('mode2-options').classList.remove('hidden');
-            document.getElementById('mode1-input').classList.add('hidden');
-        }
+        document.getElementById('mode-a-input').classList.toggle('hidden', mode !== 1);
+        document.getElementById('mode-bc-options').classList.toggle('hidden', mode === 1);
+        document.getElementById('repeat-btn').classList.toggle('hidden', mode !== 1);
+        document.getElementById('listen-icon').classList.toggle('hidden', mode !== 3);
         
         nextQuestion();
         startTimer();
@@ -168,83 +159,70 @@
     function startTimer() {
         if (timerInterval) clearInterval(timerInterval);
         timerInterval = setInterval(() => {
-            if (timer > 0) {
-                timer--;
-                document.getElementById('timer-display').innerText = `⏱ 倒數: ${timer}s`;
-            } else {
-                endGame();
-            }
+            if (timer > 0) { timer--; document.getElementById('timer-display').innerText = `⏱ ${timer}s`; }
+            else { endGame(); }
         }, 1000);
     }
 
     function nextQuestion() {
         if (activeQueue.length === 0) { endGame(); return; }
         currentWordObj = activeQueue.shift();
-        
         const displayWordEl = document.getElementById('display-word');
         const wordTypeEl = document.getElementById('word-type');
 
-        if (gameMode === 1) {
+        if (gameMode === 1) { // 模式 A：看中拼英
             displayWordEl.innerText = currentWordObj.zh;
             wordTypeEl.innerText = currentWordObj.type ? `[${currentWordObj.type}]` : "";
-            document.getElementById('word-input').value = ""; 
-            document.getElementById('word-input').focus();
-        } else {
+            document.getElementById('word-input').value = ""; document.getElementById('word-input').focus();
+        } else if (gameMode === 2) { // 模式 B：看英選中
             displayWordEl.innerText = currentWordObj.en;
             wordTypeEl.innerText = "";
+            generateOptions();
+        } else if (gameMode === 3) { // 模式 C：聽音選義
+            displayWordEl.innerText = "";
+            wordTypeEl.innerText = "請聽音選出正確中文";
             generateOptions();
         }
         speakWord();
     }
 
-    // 拼字模式 A 判斷
-    function checkAnswerMode1() {
+    function checkAnswerModeA() {
         const input = document.getElementById('word-input');
-        const rawVal = input.value.trim();
-        if (!rawVal) return;
+        const val = input.value.trim();
+        if (!val) return;
         totalAnswered++;
-        if (rawVal.toLowerCase() === currentWordObj.en.toLowerCase()) {
-            score += 10; correctCount++;
-            nextQuestion();
-        } else {
-            score = Math.max(0, score - 5);
-            wrongList.push({ zh: currentWordObj.zh, en: currentWordObj.en, user: rawVal });
-            input.classList.add('shake');
-            setTimeout(() => { input.classList.remove('shake'); nextQuestion(); }, 300);
-        }
-        document.getElementById('score-info').innerText = "得分: " + score;
+        if (val.toLowerCase() === currentWordObj.en.toLowerCase()) { score += 10; correctCount++; nextQuestion(); }
+        else { handleWrong(val); input.classList.add('shake'); setTimeout(()=> {input.classList.remove('shake'); nextQuestion();}, 300); }
+        updateScoreUI();
     }
 
-    // 辨認模式 B 選項生成
     function generateOptions() {
         const container = document.getElementById('options-container');
         container.innerHTML = "";
         let dists = wordBank.filter(w => w.zh !== currentWordObj.zh).sort(()=>Math.random()-0.5).slice(0, 9).map(w=>w.zh);
-        let choices = [...dists, currentWordObj.zh].sort(() => Math.random() - 0.5);
-        choices.forEach(c => {
+        [...dists, currentWordObj.zh].sort(()=>Math.random()-0.5).forEach(c => {
             const btn = document.createElement('button');
             btn.className = "option-btn"; btn.innerText = c;
             btn.onclick = () => {
                 totalAnswered++;
-                if (c === currentWordObj.zh) { 
-                    score += 10; correctCount++;
-                    nextQuestion(); 
-                } else { 
-                    score = Math.max(0, score - 5);
-                    wrongList.push({ zh: currentWordObj.zh, en: currentWordObj.en, user: c });
-                    btn.classList.add('wrong'); 
-                    setTimeout(() => nextQuestion(), 300);
-                }
-                document.getElementById('score-info').innerText = "得分: " + score;
+                if (c === currentWordObj.zh) { score += 10; correctCount++; nextQuestion(); }
+                else { handleWrong(c); btn.classList.add('wrong'); setTimeout(()=>nextQuestion(), 300); }
+                updateScoreUI();
             };
             container.appendChild(btn);
         });
     }
 
+    function handleWrong(userVal) {
+        score = Math.max(0, score - 5);
+        wrongList.push({ zh: currentWordObj.zh, en: currentWordObj.en, user: userVal });
+    }
+
+    function updateScoreUI() { document.getElementById('score-info').innerText = "積分: " + score; }
+
     function speakWord() { 
         window.speechSynthesis.cancel(); 
-        const u = new SpeechSynthesisUtterance(currentWordObj.en); 
-        u.lang = 'en-US'; u.rate = 0.9;
+        const u = new SpeechSynthesisUtterance(currentWordObj.en); u.lang = 'en-US'; u.rate = 0.8;
         window.speechSynthesis.speak(u); 
     }
 
@@ -252,42 +230,31 @@
         clearInterval(timerInterval);
         document.getElementById('game-screen').classList.add('hidden');
         document.getElementById('result-screen').classList.remove('hidden');
-        
         if (wrongList.length > 0) {
             document.getElementById('wrong-summary-area').classList.remove('hidden');
-            document.getElementById('wrong-summary-body').innerHTML = wrongList.map(item => `
-                <tr><td>${item.zh}</td><td><span class="txt-wrong">${item.user}</span></td><td><span class="txt-correct">${item.en}</span></td></tr>
-            `).join('');
+            document.getElementById('wrong-summary-body').innerHTML = wrongList.map(item => `<tr><td>${item.zh}</td><td><span class="txt-wrong">${item.user}</span></td><td><span class="txt-correct">${item.en}</span></td></tr>`).join('');
         }
-
-        const timeBonus = timer; // 剩餘時間獎勵
-        const finalScore = score + timeBonus;
-        document.getElementById('result-stats').innerHTML = 
-            `模式：${gameMode === 1 ? '拼字挑戰' : '辨認挑戰'}<br>` +
-            `答題積分：${score}<br>` +
-            `時間獎勵：+${timeBonus}<br>` +
-            `<b>最終總積分：${finalScore}</b>`;
-        
+        const finalScore = score + timer;
+        const modes = ["","拼字","辨認","聽力"];
+        document.getElementById('result-stats').innerHTML = `模式：${modes[gameMode]}挑戰<br>答題積分：${score}<br>時間紅利：+${timer}<br><b>總積分：${finalScore}</b>`;
         score = finalScore;
     }
 
     async function saveScore() {
         const name = document.getElementById('player-name').value.trim();
         if(!name) return alert("請輸入名字");
-        document.getElementById('save-area').innerHTML = "⏳ 正在同步至雲端...";
+        document.getElementById('save-area').innerHTML = "⏳ 同步中...";
         const acc = Math.round((correctCount / (totalAnswered || 1)) * 100) + "%";
+        const modeNames = ["","拼字","辨認","聽力"];
         try {
-            await fetch(API_URL, { 
-                method: "POST", mode: "no-cors", 
-                body: JSON.stringify({ name: name, score: score, accuracy: acc, mode: (gameMode === 1 ? "拼字" : "辨認") }) 
-            });
-            document.getElementById('save-area').innerHTML = "<p style='color:var(--success); font-weight:bold;'>✅ 成績登錄成功！</p>";
-        } catch (e) {
+            await fetch(API_URL, { method: "POST", mode: "no-cors", body: JSON.stringify({ name: name, score: score, accuracy: acc, mode: modeNames[gameMode] }) });
+            document.getElementById('save-area').innerHTML = "<p style='color:var(--success); font-weight:bold;'>✅ 上傳成功！</p>";
+        } catch(e) {
             document.getElementById('save-area').innerHTML = "<p style='color:var(--danger);'>❌ 上傳失敗</p>";
         }
     }
 
-    document.getElementById('word-input').addEventListener('keydown', (e) => { if(e.key === 'Enter') checkAnswerMode1(); });
+    document.getElementById('word-input').addEventListener('keydown', (e) => { if(e.key === 'Enter') checkAnswerModeA(); });
 </script>
 </body>
 </html>
